@@ -1577,7 +1577,7 @@ a.db-kpi:hover{transform:translateY(-3px);box-shadow:var(--sh2);border-color:var
 <script src="/assets/vendor/xlsx.full.min.js" defer></script>
 <script src="/assets/vendor/qrcode.min.js" defer></script>
 <style id="pisco-css">
-/* ===== Portal Web INSTITUTO PUBLICO DE ICA 2026: módulos del informe N.º 009-2026 ===== */
+/* ===== Portal Web IESTP CHINCHA 2026: módulos del informe N.º 009-2026 ===== */
 .pz-h2{font-size:18px;margin:18px 0 10px;color:var(--hc)}
 .pz-h2row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .pz-orange{background:var(--gold)!important;color:var(--navy)!important;border-color:var(--gold)!important}
@@ -2162,7 +2162,7 @@ tr.pz-bad td{background:var(--errbg)}
 function IX_FACTORY(HOST){
 "use strict";
 /* =====================================================================
-   INTRANET INSTITUCIONAL INSTITUTO PUBLICO DE ICA — PORTAL WEB 2026
+   INTRANET INSTITUCIONAL IESTP CHINCHA — PORTAL WEB 2026
    Núcleo: almacenamiento, datos de demostración, utilidades, CRUD,
    documentos (PDF con QR de verificación) y exportaciones (Excel/PDF).
    ===================================================================== */
@@ -2275,7 +2275,7 @@ const PALETAS = [
   ["ica","Verde institucional","Verde institucional y dorado.",{bg:"#f3f6f5",side:"#0b2b28",brand:"#0f5e57",acc:"#c08424"}],
   ["nazca","Granate Nazca","Granate y ocre, inspirado en la región Ica.",{bg:"#f7f4f3",side:"#2a0b10",brand:"#8a1c2b",acc:"#c8902e"}],
   ["pacifico","Azul Pacífico","Azul marino y turquesa, sobrio y formal.",{bg:"#f3f5f9",side:"#0b1a33",brand:"#1d4f9c",acc:"#0ea5b7"}],
-  ["web","Web institucional","Colores del portal institucional instituto-ica.example. Puede ajustarlos abajo.",null]];
+  ["web","Web institucional","Colores del portal institucional www.iestpchincha.edu.pe. Puede ajustarlos abajo.",null]];
 const WEB_DEF = {brand:"#ff4f01", acc:"#ff8c01", side:"#131d3b"};
 const HEX = /^#[0-9a-f]{6}$/i;
 const inkFor = hex => { const n = parseInt(hex.slice(1),16), c = [n>>16&255, n>>8&255, n&255].map(v => { v /= 255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4) }); return (.2126*c[0] + .7152*c[1] + .0722*c[2]) > .45 ? "#111111" : "#ffffff" };
@@ -2556,7 +2556,7 @@ const unb64u = t => { const bin = atob(t.replace(/-/g,"+").replace(/_/g,"/")); r
 /* el QR abre la verificación pública con el código y los datos del documento */
 const verifyText = d => HOST.verifyUrl(d.cod);
 function paperHead(){ const C = docCfg(), col = docColor(), band = C.estilo !== "blanco", im = (x, cls) => `<img class="plogo ${cls}" src="${esc(x.src)}" alt="">`;
-  return `<div class="ph ${band ? "band" : ""}" style="--doc:${col}">${C.logoIzq ? im(C.logoIzq,"l") : ""}<div class="pht"><b>${esc(DB.cfg.nombre)}</b><small>${esc(docSub())}</small></div>${C.logoDer ? im(C.logoDer,"r") : band ? "" : `<div class="seal" style="box-shadow:inset 0 0 0 2px ${col};color:${col};background:none">IP<br>ICA</div>`}</div>${C.lema ? `<p class="lema">“${esc(C.lema)}”</p>` : ""}` }
+  return `<div class="ph ${band ? "band" : ""}" style="--doc:${col}">${C.logoIzq ? im(C.logoIzq,"l") : ""}<div class="pht"><b>${esc(DB.cfg.nombre)}</b><small>${esc(docSub())}</small></div>${C.logoDer ? im(C.logoDer,"r") : band ? "" : `<div class="seal" style="box-shadow:inset 0 0 0 2px ${col};color:${col};background:none">IESTP<br>CHINCHA</div>`}</div>${C.lema ? `<p class="lema">“${esc(C.lema)}”</p>` : ""}` }
 function paperSign(){ const C = docCfg(); return C.firma ? `<div class="pfirma">${C.firmaImg ? `<img src="${esc(C.firmaImg.src)}" alt="Firma">` : ""}<span></span><b>${esc(docFirmaNom())}</b><small>${esc(C.firmaCargo || "")}</small></div>` : "" }
 function paperFoot(d){ const pie = docCfg().pie; return paperSign() + `<div class="pf"><div><b style="color:var(--paper-ink)">Código de verificación: <span class="mono">${d.cod}</span></b><br>Emitido el ${fd(d.fecha)} · Verifique su autenticidad en el portal institucional, opción “Verificar documento”.</div><div class="qr" aria-label="Código QR de verificación">${qrSvg(verifyText(d))}</div></div>${pie ? `<p class="ppie">${esc(pie)}</p>` : ""}` }
 function pdfVerify(doc, d, y){
@@ -2809,7 +2809,7 @@ const plazoRec = r => { const due = addBiz(r.fecha, DB.cfg.plazoReclamo); return
 function renderLogin(){
   const demo = HOST.users().filter(u => u.estado === "Activo");
   return `<div class="login">
-  <section class="lb"><div class="brandbox" style="border:0;padding:0">${sealHtml()}<div><b>${esc(DB.cfg.siglas)}</b><small>Ministerio de Educación · DRE Ica · Ica</small></div></div>
+  <section class="lb"><div class="brandbox" style="border:0;padding:0">${sealHtml()}<div><b>${esc(DB.cfg.siglas)}</b><small>Ministerio de Educación · DRE Ica · Chincha</small></div></div>
     <h1>Intranet Institucional</h1>
     <p>Plataforma de gestión académica y administrativa: horarios, certificaciones, títulos, trámite documentario, libro de reclamaciones, bolsa laboral y portafolio docente en un solo sistema.</p>
     <div class="mods">${MODS.filter(m => m[2]).map(m => `<div>${ICO[m[0]] || ""}<span>${m[2]}</span>${m[1]}</div>`).join("")}</div>
@@ -2827,7 +2827,7 @@ function renderLogin(){
     <button class="btn sec" data-act="toPublic" style="justify-content:center">Consultas públicas sin cuenta (títulos, trámites, reclamos…)</button>
     <div class="stack" style="gap:8px"><h3>Cuentas de demostración</h3><p class="note">Las cuentas y contraseñas son administradas por la institución.</p>
       <div class="demo">${demo.map(u => `<button type="button" data-act="demoLogin" data-id="${u.id}"><b>${esc(ROLES[u.rol])}</b><small>${esc(u.nom)}</small><span class="mono">${esc(u.u)}</span></button>`).join("")}</div>
-      <p class="note">Todos los nombres, documentos y cifras son ficticios y sirven solo para la demostración.</p></div>
+      <p class="note">Accede con tu cuenta institucional. Los trámites y documentos se gestionan según los permisos de tu perfil.</p></div>
   </section></div>`;
 }
 function doLogin(u){
@@ -3737,7 +3737,7 @@ function setBloq(t, patch, msg){
 function docsConfig(){
   const C = docCfg(), ed = lvl("config") >= 2, dis = ed ? "" : "disabled", ro = ed ? "" : "readonly";
   const logo = (k, l, hint) => `<div class="fld"><span class="lbl">${l}</span><div class="logo-row">${C[k] ? `<img src="${esc(C[k].src)}" alt="" style="height:56px;max-width:140px;object-fit:contain;border:1px solid var(--line);border-radius:8px;padding:4px;background:#fff">` : `<span class="note" style="border:1.5px dashed var(--line-2);border-radius:8px;padding:16px 14px">Sin imagen</span>`}<div class="btnrow"><label class="btn sm ${ed ? "" : "sec"}" for="dc_${k}" style="cursor:pointer">${ICO.imagen}${C[k] ? "Cambiar" : "Subir"}</label><input type="file" id="dc_${k}" accept="image/png,image/jpeg,image/svg+xml,image/webp" data-chg="docImg" data-id="${k}" hidden ${dis}>${C[k] ? `<button class="btn ghost sm" data-act="docImgDel" data-id="${k}" ${dis}>Quitar</button>` : ""}</div></div><span class="hint">${hint}</span></div>`;
-  const presets = [["#0b1d3f","Azul Ica"],["#c0141b","Rojo escudo"],["#0a7fc2","Celeste"],["#0f5e57","Verde"],["#8a1c2b","Granate"]];
+  const presets = [["#0b1d3f","Azul institucional"],["#c0141b","Rojo escudo"],["#0a7fc2","Celeste"],["#0f5e57","Verde"],["#8a1c2b","Granate"]];
   const sample = {cod:"MUES-TRA1", tipo:"titulo", fecha:nowStamp(), persona:"Nombre de ejemplo", por:S.user ? S.user.nom : ""};
   return `${ed ? "" : `<div class="alert info">Tiene acceso de consulta. Solo un usuario con permiso de gestión puede cambiar los documentos.</div>`}
   <div class="ap-grid"><div class="stack">
@@ -3754,7 +3754,7 @@ function docsConfig(){
     <div class="fld"><label for="dc_fc">Cargo</label><input id="dc_fc" name="firmaCargo" value="${esc(C.firmaCargo)}" maxlength="80" ${ro}></div></div>
     ${logo("firmaImg","Imagen de la firma (opcional)","Una firma escaneada sobre fondo blanco o transparente.")}</section>
   <section class="panel"><div><h2>Pie de página</h2></div>
-    <div class="fld"><label for="dc_pie">Texto del pie</label><input id="dc_pie" name="pie" value="${esc(C.pie)}" placeholder="Ej.: Av. Principal 123, Ica · mesadepartes@instituto-ica.example" maxlength="160" ${ro}></div></section>
+    <div class="fld"><label for="dc_pie">Texto del pie</label><input id="dc_pie" name="pie" value="${esc(C.pie)}" placeholder="Ej.: Av. Unión N.º 500, Pueblo Nuevo, Chincha · direcciongeneral@iestpchincha.edu.pe" maxlength="160" ${ro}></div></section>
   ${ed ? `<div class="btnrow"><button class="btn" type="submit">Guardar textos</button><button type="button" class="btn sec" data-act="docSample">Descargar PDF de ejemplo</button><button type="button" class="btn ghost" data-act="docReset">Restablecer</button></div>` : ""}
   </form></div>
   <aside class="ap-preview"><section class="panel"><h2>Vista previa</h2><div class="paper" style="padding:22px;--pp:22px;--pp2:22px;gap:10px;font-size:.86rem">${paperHead()}<h2 style="font-size:1rem">REPORTE DE VALIDACIÓN DE TÍTULO</h2><dl class="dl"><dt>Titulado(a)</dt><dd>Nombre de ejemplo</dd><dt>Programa</dt><dd>${esc((DB.programas[0]||{}).nombre || "Programa de estudios")}</dd></dl>${paperFoot(sample)}</div></section></aside></div>`;
@@ -3879,7 +3879,7 @@ const ACTIONS = {
   apTam(id){ if(lvl("config") < 2) return; setAp({tam:id}) },
   apLogoDel(){ if(lvl("config") < 2) return; log("Cambiar apariencia","Configuración","Logo eliminado"); setAp({logo:""}, "Se restableció el sello por defecto.") },
   apModo(id){ const r = document.documentElement; if(id === "sistema"){ r.removeAttribute("data-theme"); LS.del(TKEY) } else { r.setAttribute("data-theme", id); LS.set(TKEY, id) } render() },
-  apReset(){ confirmBox("Restablecer apariencia","Se volverá al tema Verde Ica, la tipografía Moderna, el sello por defecto y el título original. Los colores del tema Web institucional también se restablecen.","Restablecer",() => { log("Cambiar apariencia","Configuración","Apariencia restablecida"); setAp(Object.assign({}, AP_DEF), "Apariencia restablecida.") }) },
+  apReset(){ confirmBox("Restablecer apariencia","Se volverá al tema Verde institucional, la tipografía Moderna, el sello por defecto y el título original. Los colores del tema Web institucional también se restablecen.","Restablecer",() => { log("Cambiar apariencia","Configuración","Apariencia restablecida"); setAp(Object.assign({}, AP_DEF), "Apariencia restablecida.") }) },
   bell(){ S.ui.dd = S.ui.dd === "bell" ? null : "bell"; render() },
   account(){ S.ui.dd = S.ui.dd === "account" ? null : "account"; render() },
   readAll(){ myNotifs().forEach(n => { if(!n.leido.includes(S.user.id)) n.leido.push(S.user.id) }); if(!save())return false; render() },
@@ -4324,7 +4324,7 @@ const bic = n => `<svg viewBox="0 0 24 24" aria-hidden="true">${BRAND[n]}</svg>`
 const THEME_FONTS = { Montserrat: '"Montserrat","Inter",system-ui,Arial,sans-serif', Poppins: '"Poppins","Inter",system-ui,Arial,sans-serif', Merriweather: '"Merriweather",Georgia,"Times New Roman",serif', Inter: '"Inter",system-ui,Arial,sans-serif' };
 const BODY_FONTS = { Inter: '"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif', Poppins: '"Poppins","Inter",system-ui,Arial,sans-serif', Sistema: 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif' };
 const THEME_DEFAULTS = {
-  pisco: { label: 'Ica institucional', desc: 'Azul marino, celeste y oro del escudo del INSTITUTO PUBLICO DE ICA', modo: 'claro', navy: '#0b1d3f', navy2: '#123a7a', blue: '#0a7fc2', gold: '#f5c400', fh: 'Montserrat', ff: 'Inter', r: 12, base: true },
+  pisco: { label: 'Chincha institucional', desc: 'Azul marino, celeste y oro del escudo del IESTP CHINCHA', modo: 'claro', navy: '#0b1d3f', navy2: '#123a7a', blue: '#0a7fc2', gold: '#f5c400', fh: 'Montserrat', ff: 'Inter', r: 12, base: true },
   institucional: { label: 'Institucional', desc: 'Azul marino y dorado', modo: 'claro', navy: '#0a2a5e', navy2: '#0d3a80', blue: '#1556b8', gold: '#f2b705', fh: 'Montserrat', ff: 'Inter', r: 12, base: true },
   esmeralda: { label: 'Esmeralda', desc: 'Verde y ámbar', modo: 'claro', navy: '#0b3d2e', navy2: '#0f5a42', blue: '#12805a', gold: '#f4b400', fh: 'Poppins', ff: 'Inter', r: 16, base: true },
   vino: { label: 'Académico', desc: 'Vino y oro, títulos con serifa', modo: 'claro', navy: '#4a0f1f', navy2: '#6d1a2e', blue: '#9e2238', gold: '#d9a520', fh: 'Merriweather', ff: 'Inter', r: 6, base: true },
@@ -4363,12 +4363,12 @@ function applyTheme() {
 const svgURI = s => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
 function hashStr(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return Math.abs(h); }
 const PALS = [['#0d3a80', '#1f6fd6'], ['#0b5d5b', '#1fa39f'], ['#6b2fa3', '#a05ce0'], ['#9a3b12', '#e0782e'], ['#14532d', '#2f9e5b'], ['#7a1f3d', '#d04772'], ['#334155', '#64748b'], ['#0f4c75', '#3282b8']];
-function logoSVG(sigla = 'ICA') {
+function logoSVG(sigla = 'CH') {
   let teeth = '';
   for (let i = 0; i < 16; i++) { const a = i * 22.5; teeth += `<rect x="46" y="2" width="8" height="12" rx="1.5" fill="${TC.gold}" transform="rotate(${a} 50 50)"/>`; }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${teeth}<circle cx="50" cy="50" r="40" fill="${TC.gold}"/><circle cx="50" cy="50" r="34" fill="${TC.navy}"/><circle cx="50" cy="50" r="34" fill="none" stroke="#fff" stroke-width="1"/><path d="M30 56h40v4H30z" fill="${TC.gold}"/><path d="M33 56c0-9 7.5-16 17-16s17 7 17 16" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M50 26v14M44 32l6-6 6 6" stroke="${TC.gold}" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M36 48l14-5 14 5" stroke="#fff" stroke-width="2" fill="none"/><text x="50" y="72" text-anchor="middle" font-family="Arial,Helvetica" font-weight="900" font-size="8.5" fill="#fff" letter-spacing=".5">${esc(sigla)}</text><text x="50" y="80" text-anchor="middle" font-family="Arial" font-size="5" fill="${TC.gold}">I.E.S.P.</text></svg>`;
 }
-function campusSVG(seed = 1, w = 1600, h = 600, label = 'INSTITUTO PUBLICO DE ICA') {
+function campusSVG(seed = 1, w = 1600, h = 600, label = 'IESTP CHINCHA') {
   const r = hashStr('c' + seed); const sky = r % 2 ? ['#5aa4e8', '#cfe6fb'] : ['#3d8fdf', '#e3f1fd'];
   let palms = '';
   for (let i = 0; i < 4; i++) { const x = 120 + i * 430 + (r >> i) % 60; palms += `<g transform="translate(${x} ${h - 70})"><path d="M0 0 C 6 -90 0 -160 10 -230" stroke="#6b4f2a" stroke-width="12" fill="none"/>${[0, 1, 2, 3, 4, 5].map(k => `<path d="M10 -230 q ${-90 + k * 36} ${-30 + Math.abs(k - 2.5) * 22} ${-110 + k * 44} ${40 + Math.abs(k - 2.5) * 18}" stroke="#2f7d3a" stroke-width="14" fill="none" stroke-linecap="round"/>`).join('')}</g>`; }
@@ -4404,7 +4404,7 @@ function img(src, fallback = 'ph:campus:1') {
   else if (t === 'campus43') out = svgURI(campusSVG(s, 1200, 900, (DB && DB.config ? DB.config.inst.nombreCorto : 'INSTITUTO')));
   else if (t === 'person') out = svgURI(portraitSVG(s.replace(/^[fm]\|/, ''), s.startsWith('f|')));
   else if (t === 'topic') { const [i, seed, label] = s.split('|'); out = svgURI(topicSVG(seed || i, i, 800, 500, label || '')); }
-  else if (t === 'logo') out = svgURI(logoSVG(s || 'ICA'));
+  else if (t === 'logo') out = svgURI(logoSVG(s || 'CH'));
   else out = svgURI(topicSVG(s, 'image'));
   return IMG_CACHE[src] = out;
 }
@@ -4703,7 +4703,7 @@ function parseCSV(text) {
    Todo lo que aparece aquí es editable desde el panel.
    Nombres de docentes, estudiantes, montos y cifras son ficticios.
    ========================================================= */
-const SEED_VERSION = 13; // v13: Portal Web 2026 del INSTITUTO PUBLICO DE ICA (plana docente con CV, libro de reclamaciones, bolsa laboral y mesa de partes)
+const SEED_VERSION = 13; // v13: Portal Web 2026 del IESTP CHINCHA (plana docente con CV, libro de reclamaciones, bolsa laboral y mesa de partes)
 function seedDB() { throw new Error('Los datos se inicializan en PHP y MySQL.'); }
 const DEMO_USERS = [];
 
@@ -4783,19 +4783,19 @@ function footerHTML() {
   const ci = (icon, label, val) => `<li><span class="f-ic">${ic(icon)}</span><span><small>${label}</small>${val}</span></li>`;
   const links = [['#/nosotros/presentacion', 'Nosotros'], ['#/programas', 'Programas'], ['#/admision', 'Admisión'], ['#/matricula', 'Matrícula'], ['#/becas', 'Becas'], ['#/noticias', 'Noticias'], ['#/transparencia/documentos-gestion', 'Transparencia'], ['#/servicios/mesa-de-partes', 'Mesa de partes'], ['#/preguntas-frecuentes', 'Preguntas frecuentes'], ['#/eventos', 'Eventos']];
   return `<footer class="site-footer">
-  <div class="wrap f-cta"><div><strong>¿Listo para construir tu futuro profesional?</strong><span>Conoce nuestros programas y el proceso de admisión vigente.</span></div><div class="f-cta-b"><a class="btn gold" href="#/admision">Admisión ${new Date().getFullYear()}</a><a class="btn f-ghost" href="#/contacto">Contáctanos</a></div></div>
+  <div class="wrap f-cta"><div><strong>¿Listo para construir tu futuro profesional?</strong><span>Conoce nuestros programas y la información de admisión.</span></div><div class="f-cta-b"><a class="btn gold" href="#/admision">Admisión ${new Date().getFullYear()}</a><a class="btn f-ghost" href="#/contacto">Contáctanos</a></div></div>
   <div class="wrap f-main">
     <section class="f-col f-about"><a class="f-brand" href="#/"><img src="${logoSrc()}" alt=""><span><strong>${esc(i.nombreCorto)}</strong><small>${esc(i.nombre)}</small></span></a><p>${esc(i.descripcion)}</p>${soc ? `<div class="social f-social" aria-label="Redes sociales">${soc}</div>` : ''}</section>
     <nav class="f-col" aria-label="Enlaces del pie de página"><h2>Enlaces rápidos</h2><ul class="f-links">${links.map(([h, l]) => `<li><a href="${h}">${l}</a></li>`).join('')}</ul></nav>
     <section class="f-col"><h2>Contacto</h2><ul class="f-contact">${ci('map', 'Dirección', `<span>${esc(i.direccion)}</span>`)}${ci('phone', 'Teléfono' + (i.telefonoNota ? ' · ' + esc(i.telefonoNota) : ''), `<a href="tel:${esc(i.telefono.replace(/\D/g, ''))}">${esc(i.telefono)}</a>`)}${ci('mail', 'Correo', `<a href="mailto:${esc(i.correo)}">${esc(i.correo)}</a>`)}${ci('clock', 'Horario de atención', `<span>${esc(i.horario)}</span>`)}</ul></section>
-    <section class="f-col"><h2>Boletín informativo</h2><p>Registra tu interés en recibir el boletín institucional. El envío por correo se habilitará posteriormente.</p><form class="newsletter" data-newsletter style="flex-wrap:wrap"><details style="flex-basis:100%;color:#102b50;background:#fff;padding:8px"><summary>Verificación y privacidad</summary>${captchaHTML('cap-nl')}<label><input type="checkbox" name="acepto" required> Acepto la política de privacidad.</label></details><label class="sr-only" for="nl">Correo electrónico</label><input id="nl" type="email" placeholder="contacto@instituto-ica.example" required><button>Suscribirme</button></form>
+    <section class="f-col"><h2>Boletín informativo</h2><p>Registra tu interés en recibir el boletín institucional. El envío por correo se habilitará posteriormente.</p><form class="newsletter" data-newsletter style="flex-wrap:wrap"><details style="flex-basis:100%;color:#102b50;background:#fff;padding:8px"><summary>Verificación y privacidad</summary>${captchaHTML('cap-nl')}<label><input type="checkbox" name="acepto" required> Acepto la política de privacidad.</label></details><label class="sr-only" for="nl">Correo electrónico</label><input id="nl" type="email" placeholder="direcciongeneral@iestpchincha.edu.pe" required><button>Suscribirme</button></form>
       <h2 class="f-h2b">Enlaces institucionales</h2><div class="f-logos"><a ${linkAttrs(ext('minedu') || 'https://www.gob.pe/minedu')}>MINEDU</a><a ${linkAttrs(ext('dre') || 'https://www.dreica.gob.pe/')}>DRE Ica</a><a href="#/servicios/libro-de-reclamaciones" class="f-lr">${ic('book')} Libro de Reclamaciones</a></div></section>
   </div>
   <div class="f-bottom"><div class="wrap"><span>© ${yearNow()} ${esc(i.nombre)}. Todos los derechos reservados.</span><nav aria-label="Enlaces legales"><a href="#/terminos-de-uso">Términos de uso</a><a href="#/politica-de-privacidad">Política de privacidad</a><a href="#/mapa-del-sitio">Mapa del sitio</a><a href="#/admin">Intranet</a></nav></div></div></footer>
   ${DB.config.whatsapp.activo && DB.config.whatsapp.numero ? `<a class="wa" href="https://wa.me/${esc(DB.config.whatsapp.numero)}?text=${encodeURIComponent(DB.config.whatsapp.mensaje)}" target="_blank" rel="noopener noreferrer" aria-label="Escríbenos por WhatsApp">${bic('whatsapp')}</a>` : ''}`;
 }
 function bannerHTML(b) {
-  return `<section class="page-banner" aria-label="Banner de la sección"><img class="bg" src="${img(b.img || 'ph:campus:' + (hashStr(b.title) % 4 + 1))}" alt=""><div class="wrap">${b.kicker ? `<div class="kicker">${esc(b.kicker)}</div>` : ''}<p class="ttl" aria-hidden="true">${esc(b.title)}</p>${b.text ? `<p>${esc(b.text)}</p>` : ''}</div></section>`;
+  return `<section class="page-banner" aria-label="Banner de la sección"><img class="bg" src="${img(b.img || (DB.locales || []).find(l => isPub(l))?.foto || inst().logo)}" alt=""><div class="wrap">${b.kicker ? `<div class="kicker">${esc(b.kicker)}</div>` : ''}<p class="ttl" aria-hidden="true">${esc(b.title)}</p>${b.text ? `<p>${esc(b.text)}</p>` : ''}</div></section>`;
 }
 function crumbsHTML(cr) {
   return `<nav class="crumbs" aria-label="Ruta de navegación"><div class="wrap"><ol><li><a href="#/">${ic('home').replace('<svg', '<svg style="width:14px;height:14px;vertical-align:-2px;stroke:currentColor;fill:none;stroke-width:2"')} Inicio</a></li>${cr.map((c, i) => i === cr.length - 1 ? `<li aria-current="page">${esc(c[0])}</li>` : `<li><a href="${c[1]}">${esc(c[0])}</a></li>`).join('')}</ol></div></nav>`;
@@ -4822,7 +4822,7 @@ function setSEO({ title, desc, crumbs = [], jsonld = [] }) {
   setMeta('meta[name="description"]', 'content', desc || s.descripcion);
   setMeta('meta[property="og:title"]', 'content', document.title);
   setMeta('meta[property="og:description"]', 'content', desc || s.descripcion);
-  const org = { '@context': 'https://schema.org', '@type': 'EducationalOrganization', name: inst().nombre, alternateName: inst().nombreCorto, foundingDate: inst().fechaCreacion, email: inst().correo, telephone: inst().telefono, address: { '@type': 'PostalAddress', streetAddress: inst().direccion, addressLocality: 'Ica', addressRegion: 'Ica', addressCountry: 'PE' }, sameAs: Object.values(DB.config.redes).filter(Boolean) };
+  const org = { '@context': 'https://schema.org', '@type': 'EducationalOrganization', name: inst().nombre, alternateName: inst().nombreCorto, foundingDate: inst().fechaCreacion, email: inst().correo, telephone: inst().telefono, address: { '@type': 'PostalAddress', streetAddress: inst().direccion, addressLocality: 'Pueblo Nuevo, Chincha', addressRegion: 'Ica', addressCountry: 'PE' }, sameAs: Object.values(DB.config.redes).filter(Boolean) };
   const bc = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: location.origin + location.pathname + '#/' }].concat(crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 2, name: c[0], item: c[1] ? location.origin + location.pathname + c[1] : undefined }))) };
   let el = document.getElementById('jsonld'); if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = 'jsonld'; document.head.appendChild(el); }
   el.textContent = JSON.stringify([org, bc].concat(jsonld));
@@ -4934,7 +4934,7 @@ function teacherModal(id, progId) {
   modal({ title: 'Perfil docente', size: 'lg', body: `<div class="profile"><img src="${img(d.foto)}" alt="Fotografía de ${esc(fullName(d))}"><div><h3 style="font-size:20px;margin-bottom:2px">${esc(fullName(d))}</h3><p style="color:var(--ink2);margin-bottom:10px">${esc(d.especialidad)} · Docente ${esc(d.condicion.toLowerCase())}</p><dl class="kv"><dt>Correo institucional</dt><dd><a href="mailto:${esc(d.correo)}">${esc(d.correo)}</a></dd><dt>Programas</dt><dd>${(d.programas || []).map(x => esc((progById(x) || {}).nombre || '')).join('<br>') || '—'}${d.empleabilidad ? '<br>Empleabilidad' : ''}</dd></dl>
     <h4 style="margin-top:16px">Información académica</h4>${(d.academica || []).length ? `<div class="tbl-wrap"><table class="tbl light subtbl"><thead><tr><th>Nivel</th><th>Título / grado</th><th>Institución</th><th>Año</th></tr></thead><tbody>${d.academica.map(a => `<tr><td>${esc(a.nivel)}</td><td>${esc(a.titulo)}</td><td>${esc(a.institucion)}</td><td>${esc(a.anio)}</td></tr>`).join('')}</tbody></table></div>` : '<p>Sin registros.</p>'}
     <h4 style="margin-top:16px">Unidades didácticas que imparte${progId && progId !== 'emp' ? ' en ' + esc((progById(progId) || {}).nombre || '') : ''}</h4>${uds.length ? `<ul>${uds.map(x => `<li>${esc(x.ud.nombre)} <small style="color:var(--muted)">(Semestre ${x.ud.semestre}${progId && progId !== 'emp' ? '' : ' · ' + esc(x.p.nombre)})</small></li>`).join('')}</ul>` : '<p>Sin unidades didácticas asignadas.</p>'}
-    ${(d.experiencia || []).length ? `<h4 style="margin-top:16px">Experiencia profesional</h4><ul>${d.experiencia.map(e => `<li>${esc(e.cargo)} — ${esc(e.institucion)} (${esc(e.inicio)} – ${esc(e.fin || 'actualidad')})</li>`).join('')}</ul>` : ''}
+    ${(d.experiencia || []).length ? `<h4 style="margin-top:16px">Experiencia profesional</h4><ul>${d.experiencia.map(e => `<li>${esc(e.cargo)} — ${esc(e.institucion)} (${e.inicio || e.fin ? esc(e.inicio || 'Fecha no publicada') + ' – ' + esc(e.fin || 'Fecha no publicada') : 'Fechas no publicadas'})</li>`).join('')}</ul>` : ''}
     <p style="font-size:12px;color:var(--muted);margin-top:12px">Por protección de datos personales (Ley N.º 29733) solo se publica el correo institucional.</p></div></div>` });
 }
 R('nosotros/campus-e-informes', (path, q) => {
@@ -4999,7 +4999,7 @@ R('programas/:slug', (path, q, prm) => {
   const coord = persona(p.coordinadorId); const ds = docentesDe(p.id); const eg = P('egresados').filter(e => isPub(e) && e.programaId === p.id);
   const totalC = p.modulos.reduce((a, m) => a + m.uds.reduce((b, u) => b + (+u.creditos || 0), 0), 0);
   const hblock = (icon, t) => `<h2>${ic(icon)} ${t}</h2>`;
-  const dl = (doc, label, desc, color = '#d93025', ft = 'PDF') => doc ? `<div class="card dl-card"><span class="ft" style="background:${color}">${ft}</span><div><h3>${label}</h3><p>${desc}<br><small>${esc(doc.nombre)} · ${fsize(doc.size)}</small></p><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn xs sec" data-open='${esc(JSON.stringify({ k: label }))}' data-doc="${label === 'Brochure del programa' ? 'brochure' : 'malla'}">${ic('eye').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"')} Ver PDF</button><button class="btn xs" data-dl="${label === 'Brochure del programa' ? 'brochure' : 'malla'}">${ic('download').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"')} Descargar</button></div></div></div>` : '';
+  const dl = (doc, label, desc, color = '#d93025', ft = doc?.type?.startsWith('image/') ? 'IMG' : 'PDF') => doc ? `<div class="card dl-card"><span class="ft" style="background:${color}">${ft}</span><div><h3>${label}</h3><p>${desc}<br><small>${esc(doc.nombre)} · ${fsize(doc.size)}</small></p><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn xs sec" data-open='${esc(JSON.stringify({ k: label }))}' data-doc="${label === 'Brochure del programa' ? 'brochure' : 'malla'}">${ic('eye').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"')} Ver ${ft === 'IMG' ? 'imagen' : 'PDF'}</button><button class="btn xs" data-dl="${label === 'Brochure del programa' ? 'brochure' : 'malla'}">${ic('download').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"')} Descargar</button></div></div></div>` : '';
   const body = `
    <section class="block">${hblock('target', 'Perfil de egreso')}<div class="prose">${sanitize(p.perfil)}</div></section>
    <section class="block">${hblock('briefcase', 'Campo laboral')}<ul class="fields-list">${(p.campoItems || []).filter(Boolean).map(c => `<li>${esc(c)}</li>`).join('')}</ul></section>
@@ -5009,7 +5009,7 @@ R('programas/:slug', (path, q, prm) => {
    <section class="block">${hblock('users', 'Plana docente del programa')}${ds.length ? `<div class="grid g4">${ds.map(d => `<article class="card tcard"><img src="${img(d.foto)}" alt="Fotografía de ${esc(fullName(d))}" loading="lazy"><div class="cb"><strong>${esc(fullName(d))}</strong><small>${esc(d.especialidad)}</small><button class="btn xs sec" data-prof="${d.id}">Ver perfil</button></div></article>`).join('')}</div>` : emptyMsg('docentes')}</section>
    ${(p.convenios || []).length ? `<section class="block">${hblock('building', 'Convenios para EFSRT')}<ul>${p.convenios.map(c => `<li>${esc(c)}</li>`).join('')}</ul></section>` : ''}
    <section class="block">${hblock('grad', 'Nuestros egresados')}${eg.length ? `<div class="grid g2">${eg.map(e => `<figure class="card testi" style="margin:0"><blockquote>“${esc(e.testimonio)}”</blockquote><figcaption class="who"><img src="${img(e.foto)}" alt=""><div><strong>${esc(e.nombres)}</strong><br><small>Promoción ${esc(e.anio)}</small></div></figcaption></figure>`).join('')}</div>` : emptyMsg('testimonios de egresados')}</section>
-   <section class="notice" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span><b>¿Te interesa este programa?</b> Postula en el proceso de admisión vigente o escríbenos.</span><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn gold" href="#/admision">Postula aquí</a><a class="btn sec" href="#/contacto?programa=${p.id}">Contáctanos</a></span></section>`;
+   <section class="notice" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span><b>¿Te interesa este programa?</b> Consulta el proceso de admisión o escríbenos.</span><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn gold" href="#/admision">Consultar admisión</a><a class="btn sec" href="#/contacto?programa=${p.id}">Contáctanos</a></span></section>`;
   setSEO({ title: p.nombre, desc: p.resumen, crumbs: [['Programas de Estudio', '#/programas'], [p.nombre]], jsonld: [{ '@context': 'https://schema.org', '@type': 'EducationalOccupationalProgram', name: p.nombre, description: p.resumen, timeToComplete: 'P3Y', educationalProgramMode: p.modalidad, provider: { '@type': 'EducationalOrganization', name: inst().nombre } }] });
   const fact = (icon, l, v) => `<div>${ic(icon)}<span><small>${l}</small><b>${esc(v).replace(/ \/ /g, '<br>')}</b></span></div>`;
   const side = `<nav class="side-box" aria-label="Programas de estudio"><h2>Programas de Estudio</h2><ul>${progs().map(x => `<li><a href="#/programas/${x.slug}" ${x.id === p.id ? 'aria-current="page"' : ''}>${esc(x.nombre)}</a></li>`).join('')}</ul></nav><div class="side-box"><div class="pad"><strong>¿Tienes alguna consulta?</strong><p style="margin:4px 0 10px">Estamos para ayudarte.</p><a class="btn sm" href="#/nosotros/campus-e-informes?programa=${p.id}">Ir a Campus e Informes</a></div></div>`;
@@ -5024,7 +5024,7 @@ R('admision', (path, q) => {
   const all = P('admisiones').filter(a => a.estado !== 'Borrador' || a._preview).sort((a, b) => b.anio - a.anio);
   const a = all.find(x => String(x.anio) === q.get('anio')) || admVigente();
   if (!a) return shell(path, { title: 'Admisión', crumbs: [['Admisión y Matrículas', '#/admision'], ['Admisión']], banner: { title: 'Admisión' }, side: null, body: `<h1>Admisión</h1>${emptyMsg('procesos de admisión')}` });
-  const tupaAdm = P('tupa').filter(t => isPub(t) && t.categoria === 'Admisión' && t.anio == (DB.tupaDocs.anio || 2026));
+  const tupaAdm = P('tupa').filter(t => isPub(t) && (t.categoria === 'Admisión' || /EXAMEN DE ADMISI/i.test(t.categoria)) && t.anio == (DB.tupaDocs.anio || 2026));
   const uit = DB.config.uit[DB.tupaDocs.anio] || 0;
   const tbtn = (pid, t) => { const r = (a.resultados[pid] || {})[t]; return r ? `<button class="btn xs violet" data-res="${pid}|${t}">Ver Resultados</button>` : '<span aria-label="Sin resultados publicados" style="color:var(--muted)">—</span>'; };
   const body = `<p style="text-align:center;margin:0;color:var(--link);font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:13px">${a.vigente ? 'Bienvenido al proceso de' : 'Proceso histórico (cerrado)'}</p><h1 style="text-align:center;padding-bottom:0" class="noline">${esc(a.titulo)}</h1>${a.descripcion ? `<p class="lead" style="text-align:center;max-width:760px;margin:0 auto 16px">${esc(a.descripcion)}</p>` : ''}
@@ -5044,12 +5044,12 @@ R('admision', (path, q) => {
 });
 /* ---------- MATRÍCULA ---------- */
 R('matricula', path => {
-  const m = matVigente();
+  const m = matVigente() || P('matriculas').filter(m => m.estado === 'Cerrado').sort((a, b) => b.periodo.localeCompare(a.periodo))[0];
   if (!m) return shell(path, { title: 'Matrícula', crumbs: [['Admisión y Matrículas', '#/admision'], ['Matrícula']], banner: { title: 'Matrícula' }, side: null, body: `<h1>Matrícula</h1>${emptyMsg('periodos de matrícula')}` });
   const items = s => sortO((m.items || []).filter(x => x.seccion === s && x.estado === 'Publicado' && !x.deleted));
   const col = (icon, t, s, extra = '') => `<section class="card"><div class="cb"><h2 style="font-size:17px;margin-top:0;display:flex;gap:8px;align-items:center">${ic(icon).replace('<svg', '<svg style="width:22px;height:22px;stroke:var(--link);fill:none;stroke-width:2"')} ${t}</h2>${items(s).length ? `<ol style="padding-left:20px;margin:0">${items(s).map(x => `<li style="margin-bottom:6px">${esc(x.texto)}</li>`).join('')}</ol>` : '<p>Sin requisitos registrados.</p>'}${extra}</div></section>`;
-  const tupaM = P('tupa').filter(t => isPub(t) && t.categoria === 'Matrícula');
-  const body = `<h1 style="text-align:center">${esc(m.titulo)}</h1><p style="text-align:center"><span class="badge" style="font-size:14px;padding:6px 14px">${ic('calendar').replace('<svg', '<svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;vertical-align:-3px"')} Inicio de clases: <time datetime="${esc(m.inicioClases)}">${fdate(m.inicioClases + 'T12:00:00')}</time></span></p>
+  const tupaM = P('tupa').filter(t => isPub(t) && (t.categoria === 'Matrícula' || /MATR[IÍ]CULA/i.test(t.categoria)));
+  const body = `<h1 style="text-align:center">${esc(m.titulo)}</h1>${!m.vigente ? '<p class="notice warn">Información histórica de matrícula. Confirma el próximo proceso con Secretaría Académica.</p>' : ''}<p style="text-align:center"><span class="badge" style="font-size:14px;padding:6px 14px">${ic('calendar').replace('<svg', '<svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;vertical-align:-3px"')} Inicio de clases: <time datetime="${esc(m.inicioClases)}">${fdate(m.inicioClases + 'T12:00:00')}</time></span></p>
    <div class="prose">${sanitize(m.descripcion)}</div>
    <div class="grid g3">${col('money', 'Costos de matrícula', 'costos', `${tupaM.length ? `<table class="tbl light subtbl" style="margin-top:10px"><tbody>${tupaM.map(t => `<tr><td>${esc(t.denominacion)}</td><td class="num">${money(t.monto)}</td></tr>`).join('')}</tbody></table>` : ''}${m.docTasas ? `<button class="btn sm sec" style="margin-top:10px;width:100%" data-tasas>Ver tasas y costos vigentes →</button>` : ''}`)}${col('user', 'Matrícula de ingresantes', 'ingresantes')}${col('restore', 'Ratificación de matrícula', 'ratificacion')}</div>
    ${(m.cronograma || []).length ? `<h2>Cronograma del periodo ${esc(m.periodo)}</h2><div class="tbl-wrap"><table class="tbl light"><thead><tr><th>Actividad</th><th>Fecha</th></tr></thead><tbody>${m.cronograma.map(c => `<tr><td>${esc(c.actividad)}</td><td>${esc(c.fecha)}</td></tr>`).join('')}</tbody></table></div>` : ''}
@@ -5106,7 +5106,7 @@ const DST = { page: 1, size: 5 };
 R('transparencia', p => ROUTES['transparencia/documentos-gestion'](p, new URLSearchParams()));
 R('transparencia/documentos-gestion', path => {
   const docs = P('documentos').filter(d => ['Publicado', 'Histórico'].includes(d.estado) || d._preview);
-  const years = [...new Set(docs.map(d => String(d.vigencia).slice(0, 4)))].sort().reverse();
+  const years = [...new Set(docs.map(d => String(d.vigencia).slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
   const body = `<h1>Documentos de Gestión</h1><p class="lead">Normas, planes y documentos que orientan nuestra institución. Se muestran por defecto los documentos vigentes; puede consultar versiones anteriores con el filtro de estado.</p>
    <form class="filters" data-df role="search"><div class="field"><label for="df-t">Tipo de documento</label><select id="df-t" name="tipo"><option value="">Todos</option>${coll('tiposDocumento').map(t => `<option value="${t.id}">${esc(t.nombre)}</option>`).join('')}</select></div>
    <div class="field"><label for="df-y">Año de vigencia</label><select id="df-y" name="anio"><option value="">Todos</option>${years.map(y => `<option>${y}</option>`).join('')}</select></div>
@@ -5349,7 +5349,7 @@ R('noticias/:slug', (path, q, prm) => {
   const n = P('noticias').find(x => x.slug === prm.slug && newsVisible(x));
   if (!n) return notFound(path);
   const rel = pubNews().filter(x => x.id !== n.id && x.categoriaId === n.categoriaId).slice(0, 3);
-  const url = location.protocol === 'file:' ? 'https://instituto-ica.example/' + location.hash : location.href;
+  const url = location.protocol === 'file:' ? 'https://www.iestpchincha.edu.pe/' + location.hash : location.href;
   const body = `<article><header><div class="meta" style="display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13.5px"><time datetime="${esc(n.fecha)}">${fdate(n.fecha, true)}</time><span class="badge">${esc(catName(n.categoriaId))}</span></div><h1>${esc(n.titulo)}</h1><p class="lead">${esc(n.resumen)}</p></header>
    ${n.video ? `<div style="aspect-ratio:16/9;margin-bottom:16px"><iframe src="${esc(n.video)}" title="Video: ${esc(n.titulo)}" style="width:100%;height:100%;border:0;border-radius:10px" allowfullscreen loading="lazy"></iframe></div>` : `<figure class="figure"><img src="${img(n.imagen, 'ph:campus:4')}" alt="Imagen de la noticia: ${esc(n.titulo)}"><figcaption>${esc(n.titulo)}</figcaption></figure>`}
    <div class="prose">${sanitize(n.contenido)}</div>
@@ -5379,7 +5379,7 @@ R('mapa-del-sitio', path => {
   return { html: shell(path, { title: 'Mapa del sitio', crumbs: [['Mapa del sitio']], banner: { title: 'Mapa del sitio' }, side: null, body }), after: () => $('[data-sm]').onclick = downloadSitemap };
 });
 function downloadSitemap() {
-  const base = 'https://instituto-ica.example';
+  const base = 'https://www.iestpchincha.edu.pe';
   const urls = ['/', '/programas', '/admision', '/matricula', '/becas', '/noticias', '/eventos', '/contacto', '/preguntas-frecuentes', '/mapa-del-sitio', '/servicios/mesa-de-partes', '/servicios/bolsa-laboral', '/servicios/consulta-certificados', '/servicios/complementarios'].concat(['presentacion', 'resena-historica', 'mision-vision', 'organizacion', 'reconocimientos', 'plana-jerarquica', 'plana-docente', 'campus-e-informes'].map(s => '/nosotros/' + s)).concat(['documentos-gestion', 'inversiones', 'libro-de-reclamaciones', 'licenciamiento', 'tupa', 'estadisticas', 'convocatorias'].map(s => '/transparencia/' + s)).concat(progs().map(p => '/programas/' + p.slug)).concat(pubNews().map(n => '/noticias/' + n.slug));
   downloadText(`\x3c?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${base}${u}</loc></url>`).join('\n')}\n</urlset>`, 'sitemap.xml', 'application/xml');
 }
@@ -5897,16 +5897,16 @@ SPECS.docentes = {
     { n: 'foto', l: 'Fotografía', t: 'image', full: true, hint: 'Formato vertical u horizontal; se recorta de forma uniforme en el portal.' },
     { n: 'titulo', l: 'Abreviatura (Ing., Lic., Mg., Dr.)', max: 8 }, { n: 'tipo', l: 'Tipo de personal', t: 'select', req: true, empty: false, opts: ['Docente', 'Administrativo'] },
     { n: 'nombres', l: 'Nombres', req: true }, { n: 'apellidos', l: 'Apellidos', req: true },
-    { n: 'dni', l: 'Documento de identidad (DNI)', req: true, unique: true, max: 8, hint: 'No se publica. Evita registros duplicados.' }, { n: 'correo', l: 'Correo institucional', t: 'email', req: true },
+    { n: 'dni', l: 'Documento de identidad (DNI)', unique: true, max: 8, hint: 'Opcional y privado. Completar solo con un dato verificado.' }, { n: 'correo', l: 'Correo institucional', t: 'email' },
     { n: 'telefono', l: 'Teléfono (opcional, no se publica)' }, { n: 'web', l: 'Página web / ORCID (opcional)', t: 'url' },
-    { n: 'especialidad', l: 'Especialidad o profesión', req: true }, { n: 'condicion', l: 'Condición', t: 'select', req: true, empty: false, opts: ['Nombrado', 'Contratado'] },
+    { n: 'especialidad', l: 'Especialidad o profesión', req: true }, { n: 'condicion', l: 'Condición', t: 'select', opts: ['Nombrado', 'Contratado'] },
     { n: 'progud', l: 'Programas de estudio y unidades didácticas', t: 'custom', render: w => progUdHTML(w), bind: (w, box, rer) => bindProgUd(w, box, rer) },
     { n: 'academica', l: 'Información académica', t: 'rows', cols: [{ n: 'nivel', l: 'Nivel / tipo', t: 'select', opts: ['Título técnico', 'Bachiller', 'Título profesional', 'Segunda especialidad', 'Especialización', 'Maestría', 'Doctorado', 'Diplomado'] }, { n: 'titulo', l: 'Título o denominación' }, { n: 'institucion', l: 'Institución' }, { n: 'anio', l: 'Año', t: 'number', w: '80px' }] },
     { n: 'experiencia', l: 'Experiencia profesional (opcional)', t: 'rows', cols: [{ n: 'institucion', l: 'Institución' }, { n: 'cargo', l: 'Cargo' }, { n: 'inicio', l: 'Inicio', w: '80px' }, { n: 'fin', l: 'Término', w: '80px' }] },
     { n: 'otros', l: 'Otros datos (opcional)', t: 'rows', cols: [{ n: 'tipo', l: 'Tipo', t: 'select', opts: ['Reconocimiento', 'Publicación', 'Certificación', 'Otro'] }, { n: 'descripcion', l: 'Descripción' }] },
     { n: 'orden', l: 'Orden de presentación', t: 'number', min: 1, side: true },
   ],
-  validate: w => { const e = {}; if (!/^\d{8}$/.test(w.dni || '')) e.dni = 'El DNI debe tener 8 dígitos.'; if (w.tipo === 'Docente' && w.estado === 'Publicado' && !(w.programas || []).length && !w.empleabilidad) e.progud = 'Asocie al docente al menos a un programa o a Empleabilidad para publicarlo.'; (w.academica || []).forEach(a => { if (!a.titulo) e.academica = 'Complete el título de cada antecedente académico o quite la fila.'; }); return e; },
+  validate: w => { const e = {}; if (w.dni && !/^\d{8}$/.test(w.dni)) e.dni = 'El DNI debe tener 8 dígitos.'; if (w.tipo === 'Docente' && w.estado === 'Publicado' && !(w.programas || []).length && !w.empleabilidad) e.progud = 'Asocie al docente al menos a un programa o a Empleabilidad para publicarlo.'; (w.academica || []).forEach(a => { if (!a.titulo) e.academica = 'Complete el título de cada antecedente académico o quite la fila.'; }); return e; },
   auditDetail: (w, p) => p ? ['programas', 'uds', 'estado'].filter(k => JSON.stringify(w[k]) !== JSON.stringify(p[k])).map(k => k === 'uds' ? 'Asignación de UD' : k === 'programas' ? 'Asignación de programas' : 'Estado').join(', ') : '',
   beforeDelete: r => alive('jerarquica').some(j => j.personaId === r.id && j.estado === 'Publicado') ? 'La persona integra la plana jerárquica. Retírela de allí primero.' : '',
   inUse: r => coll('programas').some(p => p.coordinadorId === r.id) ? 'La persona es coordinadora de un programa. Reasigne la coordinación primero.' : '',
@@ -6003,7 +6003,7 @@ SPECS.becas = {
   canEdit: r => !perClosed(r.periodoId) || canFlag('closePeriod'), canDelete: r => !perClosed(r.periodoId) || canFlag('closePeriod'),
   exportCSV: { head: ['Periodo', 'Apellidos', 'Nombres', 'DNI', 'Programa', 'Tipo de beca', 'Motivo', 'Estado'], row: r => [perLabel(r.periodoId), r.apellidos, r.nombres, canFlag('viewDni') ? r.dni : maskDni(r.dni), (byId('programas', r.programaId) || {}).nombre, (byId('tiposBeca', r.tipoId) || {}).nombre, r.motivo, r.estado] },
   defaults: () => ({ periodoId: (coll('becasPeriodos').find(p => p.vigente) || {}).id || '', estado: 'Publicado' }),
-  fields: [{ n: 'periodoId', l: 'Periodo de becas', t: 'select', req: true, opts: () => coll('becasPeriodos').filter(p => p.estado !== 'Cerrado' || canFlag('closePeriod')).map(p => [p.id, `${p.anio} - ${p.periodo}`]) }, { n: 'dni', l: 'DNI', req: true, max: 8 }, { n: 'apellidos', l: 'Apellidos', req: true }, { n: 'nombres', l: 'Nombres', req: true }, { n: 'programaId', l: 'Programa de estudio', t: 'select', req: true, opts: progOpts }, { n: 'tipoId', l: 'Tipo de beca', t: 'select', req: true, opts: () => coll('tiposBeca').filter(t => t.estado === 'Activo').map(t => [t.id, t.nombre]) }, { n: 'motivo', l: 'Motivo o descripción', full: true }],
+  fields: [{ n: 'periodoId', l: 'Periodo de becas', t: 'select', req: true, opts: () => coll('becasPeriodos').filter(p => p.estado !== 'Cerrado' || canFlag('closePeriod')).map(p => [p.id, `${p.anio} - ${p.periodo}`]) }, { n: 'dni', l: 'DNI (opcional, privado)', max: 8 }, { n: 'apellidos', l: 'Apellidos', req: true }, { n: 'nombres', l: 'Nombres', req: true }, { n: 'programaId', l: 'Programa de estudio', t: 'select', req: true, opts: progOpts }, { n: 'tipoId', l: 'Tipo de beca', t: 'select', req: true, opts: () => coll('tiposBeca').filter(t => t.estado === 'Activo').map(t => [t.id, t.nombre]) }, { n: 'motivo', l: 'Motivo o descripción', full: true }],
   validate: w => { const e = {}; if (!/^\d{8}$/.test(w.dni)) e.dni = 'El DNI debe tener 8 dígitos numéricos.'; const d = alive('becarios').find(b => b.id !== w.id && b.dni === w.dni && b.periodoId === w.periodoId && b.programaId === w.programaId && b.tipoId === w.tipoId); if (d) e.dni = 'Este beneficiario ya está registrado con el mismo periodo, programa y tipo de beca.'; else { const near = alive('becarios').find(b => b.id !== w.id && b.dni === w.dni && b.periodoId === w.periodoId); if (near) toast(`Advertencia: el DNI ya tiene otra beca en el mismo periodo (${(byId('tiposBeca', near.tipoId) || {}).nombre}).`); } if (perClosed(w.periodoId) && !canFlag('closePeriod')) e.periodoId = 'El periodo está cerrado.'; return e; },
 };
 SPECS.becasper = {
@@ -6202,7 +6202,7 @@ CUSTOM.config = () => singletonForm({
     { n: 'nombre', l: 'Denominación oficial', req: true, full: true }, { n: 'nombreCorto', l: 'Nombre corto / siglas', req: true }, { n: 'logoSigla', l: 'Texto del logotipo generado', max: 10 },
     { n: 'slogan', l: 'Eslogan', full: true }, { n: 'lema', l: 'Lema de cabecera' }, { n: 'descripcion', l: 'Descripción institucional (pie de página)', t: 'textarea', full: true },
     { n: 'logo', l: 'Logotipo oficial (opcional, reemplaza al generado)', t: 'image', full: true },
-    { n: 'direccion', l: 'Dirección', req: true, full: true }, { n: 'telefono', l: 'Teléfono', req: true }, { n: 'telefonoNota', l: 'Detalle del teléfono' }, { n: 'correo', l: 'Correo institucional', t: 'email', req: true }, { n: 'horario', l: 'Horario de atención', req: true }, { n: 'horarioSab', l: 'Horario de sábados' },
+    { n: 'direccion', l: 'Dirección', req: true, full: true }, { n: 'telefono', l: 'Teléfono', req: true }, { n: 'telefonoNota', l: 'Detalle del teléfono' }, { n: 'correo', l: 'Correo institucional', t: 'email' }, { n: 'horario', l: 'Horario de atención', req: true }, { n: 'horarioSab', l: 'Horario de sábados' },
     { n: 'ruc', l: 'RUC' }, { n: 'codigoModular', l: 'Código modular' }, { n: 'fechaCreacion', l: 'Fecha de creación', t: 'date', req: true }, { n: 'normaCreacion', l: 'Norma de creación' },
     { n: 'lat', l: 'Latitud de la sede', t: 'number', step: 'any' }, { n: 'lng', l: 'Longitud de la sede', t: 'number', step: 'any' },
     { n: 'fb', l: 'Facebook', t: 'url' }, { n: 'yt', l: 'YouTube', t: 'url' }, { n: 'ig', l: 'Instagram', t: 'url' }, { n: 'tt', l: 'TikTok', t: 'url' },
@@ -6853,8 +6853,8 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
 <script>
-/* ==== pisco.js ==== Portal Web INSTITUTO PUBLICO DE ICA 2026 */
-var PISCO_LOGO = 'data:image/png;base64,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';
+/* ==== pisco.js ==== Portal Web IESTP CHINCHA 2026 */
+var PISCO_LOGO = "/assets/chincha/logo-chincha-347d9598.webp";
 (function () {
 'use strict';
 /* =========================================================
@@ -6865,22 +6865,22 @@ const MPV_PLAZOS = { 'Solicitud': 10, 'Oficio': 7, 'Carta': 7, 'Informe': 7, 'Me
 const MPV_FORMATOS = [['pdf', 'PDF'], ['doc', 'DOC'], ['docx', 'DOCX'], ['xls', 'XLS'], ['xlsx', 'XLSX'], ['jpg', 'JPG'], ['jpeg', 'JPEG'], ['png', 'PNG']];
 const MIME_OK = { pdf: ['application/pdf'], doc: ['application/msword'], docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'], xls: ['application/vnd.ms-excel'], xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], jpg: ['image/jpeg'], jpeg: ['image/jpeg'], png: ['image/png'] };
 const FERIADOS_2026 = ['2026-01-01', '2026-04-02', '2026-04-03', '2026-05-01', '2026-06-07', '2026-06-29', '2026-07-23', '2026-07-28', '2026-07-29', '2026-08-06', '2026-08-30', '2026-10-08', '2026-11-01', '2026-12-08', '2026-12-09', '2026-12-25'];
-const LR_DEF = { responsable: 'Responsable de Administración', cargo: 'Jefa de Área de Administración', correo: 'administracion@instituto-ica.example', plazoReclamo: 15, plazoQueja: 15, alerta: 3, areaInicial: 'ADM',
+const LR_DEF = { responsable: 'Responsable de Administración', cargo: 'Jefa de Área de Administración', correo: '', plazoReclamo: 15, plazoQueja: 15, alerta: 3, areaInicial: 'ADM',
   flujo: 'El reclamo o queja se registra en el Libro de Reclamaciones Virtual y se notifica al responsable institucional. El responsable lo deriva al área competente, que lo atiende y propone la respuesta. El responsable remite la respuesta al usuario por correo electrónico dentro del plazo. Todo el recorrido queda en el historial.' };
-const BOLSA_DEF = { responsable: 'Unidad de Bienestar y Empleabilidad', jefe: 'Jefe(a) de la Unidad de Bienestar y Empleabilidad', correo: 'bienestaryempleabilidad@instituto-ica.example',
+const BOLSA_DEF = { responsable: 'Unidad de Bienestar y Empleabilidad', jefe: 'Jefe(a) de la Unidad de Bienestar y Empleabilidad', correo: '',
   criterios: ['RUC de 11 dígitos válido (dígito verificador), en estado ACTIVO y condición HABIDO en SUNAT.', 'Razón social, sector económico y dirección fiscal coincidentes con la ficha RUC.', 'Persona de contacto con cargo y correo corporativo o institucional verificable.', 'Actividad económica lícita y vinculada a los programas de estudio del instituto.', 'Las convocatorias deben indicar puesto, requisitos, modalidad y fecha límite; no se aceptan cobros a postulantes.', 'Plazo de evaluación: hasta 3 días hábiles desde el registro.'] };
 
 function pzEnsure() {
   if (!DB || !DB.config) return;
   const c = DB.config; c.contadores = c.contadores || {};
   ['LR', 'EXP', 'MPV', 'DOC', 'RCL'].forEach(k => { c.contadores[k] = c.contadores[k] || {}; });
-  c.mpv = Object.assign({ horaIni: '08:00', horaFin: '15:40', dias: 'Lunes a viernes', maxMB: 40, maxArchivos: 5, tipos: MPV_TIPOS.slice(), formatos: MPV_FORMATOS.map(f => f[0]), feriados: FERIADOS_2026.slice(), plazos: Object.assign({}, MPV_PLAZOS), correo: 'mesadepartes@instituto-ica.example', telefono: '900 000000', prefijo: 'MPV-IESTP-ICA' }, c.mpv || {});
+  c.mpv = Object.assign({ horaIni: '08:00', horaFin: '15:40', dias: 'Lunes a viernes', maxMB: 40, maxArchivos: 5, tipos: MPV_TIPOS.slice(), formatos: MPV_FORMATOS.map(f => f[0]), feriados: FERIADOS_2026.slice(), plazos: Object.assign({}, MPV_PLAZOS), correo: 'direcciongeneral@iestpchincha.edu.pe', telefono: '056-480141', prefijo: 'MPV-IESTPCH' }, c.mpv || {});
   c.lr = Object.assign({}, LR_DEF, c.lr || {});
   c.bolsa = Object.assign({}, BOLSA_DEF, c.bolsa || {});
   Object.assign(EXP_PLAZOS, c.mpv.plazos);
   if (!EXP_STATES.includes('Derivado')) EXP_STATES.splice(1, 0, 'Derivado');
   if (!LR_STATES.includes('Derivado')) LR_STATES.splice(1, 0, 'Derivado');
-  /* enlaces oficiales verificados en instituto-ica.example (23/10/2026) */
+  /* Compatibilidad de enlaces de instalaciones anteriores; el contenido institucional se importa por separado. */
   if (!c.enlacesV2 && Array.isArray(DB.enlaces)) { const E = id => DB.enlaces.find(x => x.id === id);
     const set = (id, url) => { const e = E(id); if (e && (!e.url || /ica\.bibliotecalatina|www\.dreica\.gob\.pe\/?$/.test(e.url))) Object.assign(e, { url, estado: 'Activo', verificado: '2026-10-23' }); };
     set('biblioteca', ''); set('aula', ''); set('dre', 'https://dreica.gob.pe/ica'); c.enlacesV2 = true; }
@@ -7232,7 +7232,7 @@ expDetalle = function (id) {
 };
 function mpvAreasAdm() {
   const as = areasAll();
-  const html = admHead('Mesa de partes virtual', 'Relación de áreas receptoras, responsables y correos institucionales (@instituto-ica.example). Las derivaciones se notifican a estos correos.', can('ix-config') ? `<a class="btn" href="#/admin/ix-config">${sic('edit')} Editar áreas</a>` : '', 'inbox', [['Mesa de partes', '#/admin/expedientes'], ['Áreas receptoras']]) + mpTabs('a')
+  const html = admHead('Mesa de partes virtual', 'Relación de áreas receptoras, responsables y correos institucionales (@www.iestpchincha.edu.pe). Las derivaciones se notifican a estos correos.', can('ix-config') ? `<a class="btn" href="#/admin/ix-config">${sic('edit')} Editar áreas</a>` : '', 'inbox', [['Mesa de partes', '#/admin/expedientes'], ['Áreas receptoras']]) + mpTabs('a')
     + `<div class="panel"><div class="tbl-wrap" style="border:0"><table class="tbl light"><thead><tr><th>Nivel / clasificación</th><th>Código</th><th>Área / cargo / órgano</th><th>Responsable</th><th>Correo corporativo</th><th class="c">Expedientes abiertos</th><th class="c">Estado</th></tr></thead><tbody>${NIVELES.map(n => as.filter(a => (a.nivel || 'Áreas') === n).map((a, i, g) => `<tr>${i === 0 ? `<td rowspan="${g.length}" style="font-weight:700;vertical-align:middle">${esc(n)}</td>` : ''}<td class="mono">${esc(a.cod)}</td><td>${esc(a.nombre)}</td><td>${esc(a.resp)}</td><td><a href="mailto:${esc(a.correo)}">${esc(a.correo)}</a></td><td class="c">${coll('expedientes').filter(x => x.area === a.cod && !['Atendido', 'Archivado'].includes(x.estado)).length}</td><td class="c">${stBadge(a.activo ? 'Activo' : 'Inactivo')}</td></tr>`).join('')).join('')}</tbody></table></div><p class="note" style="padding:0 16px 14px">Las áreas se administran en Configuración académica › Áreas receptoras; los cambios se reflejan en el formulario público y en las derivaciones.</p></div>`;
   return { html };
 }
@@ -7277,7 +7277,7 @@ function lrForm() {
      <div class="field"><label for="l2-nd">Número de documento <span class="req">*</span></label><input id="l2-nd" name="numDoc" maxlength="12" placeholder="Ingrese su documento" autocomplete="off"></div>
      <div class="field"><label for="l2-no">Nombres <span class="req">*</span></label><input id="l2-no" name="nombresP" maxlength="80" placeholder="Ingrese sus nombres" autocomplete="given-name"></div>
      <div class="field"><label for="l2-ap">Apellidos <span class="req">*</span></label><input id="l2-ap" name="apellidos" maxlength="80" placeholder="Ingrese sus apellidos" autocomplete="family-name"></div>
-     <div class="field"><label for="l2-e">Correo electrónico <span class="req">*</span></label><input id="l2-e" name="correo" type="email" maxlength="120" placeholder="contacto@instituto-ica.example" autocomplete="email"></div>
+     <div class="field"><label for="l2-e">Correo electrónico <span class="req">*</span></label><input id="l2-e" name="correo" type="email" maxlength="120" placeholder="direcciongeneral@iestpchincha.edu.pe" autocomplete="email"></div>
      <div class="field"><label for="l2-t">Teléfono</label><input id="l2-t" name="telefono" maxlength="15" inputmode="tel" placeholder="999 999 999" autocomplete="tel"></div>
      <div class="field"><label for="l2-c">Condición del usuario <span class="req">*</span></label><select id="l2-c" name="condicion"><option value="">Seleccione</option>${LR_COND.map(x => `<option>${x}</option>`).join('')}</select></div>
      <div class="field"><label for="l2-p">Programa de estudios</label><select id="l2-p" name="programaId"><option value="">Seleccione</option>${progs().map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('')}<option value="ninguno">No corresponde</option></select></div>
@@ -7580,7 +7580,7 @@ async function readSheet(file) {
   const h = cells(lines[0]); return lines.slice(1).map(l => { const c = cells(l); const o = {}; h.forEach((k, i) => o[k] = c[i] || ''); return o; });
 }
 function padronTemplate() {
-  const rows = [PADRON_COLS, ['70000001', 'APELLIDO APELLIDO, NOMBRES (EJEMPLO)', 'Egresado', '15/03/2000', 'contacto@instituto-ica.example', 'Av. Ejemplo 123, Ica', '900000001', 'Arquitectura de Plataformas y Servicios de Tecnologías de Información', '2024', 'Empresa de ejemplo S.A.C.', 'Soporte técnico'], ['70000002', 'APELLIDO APELLIDO, NOMBRES (EJEMPLO)', 'Por Concluir', '02/08/2004', '', '', '900000002', 'Contabilidad', '', '', '']];
+  const rows = [PADRON_COLS, ['70000001', 'APELLIDO APELLIDO, NOMBRES (EJEMPLO)', 'Egresado', '15/03/2000', 'direcciongeneral@iestpchincha.edu.pe', 'Av. Ejemplo 123, Ica', '900000001', 'Arquitectura de Plataformas y Servicios de Tecnologías de Información', '2024', 'Empresa de ejemplo S.A.C.', 'Soporte técnico'], ['70000002', 'APELLIDO APELLIDO, NOMBRES (EJEMPLO)', 'Por Concluir', '02/08/2004', '', '', '900000002', 'Contabilidad', '', '', '']];
   if (window.XLSX) { const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = PADRON_COLS.map((c, i) => ({ wch: [10, 38, 14, 14, 26, 30, 12, 50, 12, 28, 18][i] })); XLSX.utils.book_append_sheet(wb, ws, 'Padron'); const ins = XLSX.utils.aoa_to_sheet([['Instrucciones de llenado'], ['DNI: 8 dígitos (obligatorio).'], ['Apellidos y Nombres: obligatorio.'], ['Condición: Egresado, Titulado o Por Concluir (estudiante).'], ['Programa de Estudio: ASHR, APSTI (o Computación e Informática), Contabilidad, Enfermería Técnica, Producción Agropecuaria.'], ['Fecha de nacimiento: DD/MM/AAAA. Celular: 9 dígitos.'], ['Si el DNI ya existe se actualizan sus datos; si no, se registra.']]); XLSX.utils.book_append_sheet(wb, ins, 'Instrucciones'); downloadBlob(new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'plantilla_padron_estudiantes_egresados.xlsx'); }
   else downloadText(toCSV(rows), 'plantilla_padron_estudiantes_egresados.csv', 'text/csv');
 }
@@ -7876,25 +7876,27 @@ async function cvPdf(p) {
 
 /* ---------- Portal: Plana Docente (directorio del año en curso) y Equipo directivo ---------- */
 const autorizado = p => !!(p && p.cv && p.cv.autoriza && p.cv.autoriza.ok);
+const directorioVisible = p => !p?.cv?.autoriza?.revocado && (autorizado(p) || /^https:\/\/(www\.)?iestpchincha\.edu\.pe\/nosotros\//.test(p?.fuente || ''));
+function openPublicTeacher(id) { const p = byId('personas', id); if (!p) return; if (autorizado(p)) return cvDownload(p, 'public'); if (directorioVisible(p)) teacherModal(id, (p.programas || [])[0]); }
 const pzPlanaTabs = a => `<nav class="pz-ptabs" aria-label="Plana institucional"><a href="#/nosotros/plana-jerarquica" ${a === 'j' ? 'aria-current="page"' : ''}>Personal directivo jerárquico</a><a href="#/nosotros/plana-docente" ${a === 'd' ? 'aria-current="page"' : ''}>Docentes</a></nav>`;
-const tcard = (p, cargo, btn2) => `<article class="pz-tcard"><div class="ph"><img src="${img(p.foto)}" alt="Fotografía de ${esc(fullName(p))}" loading="lazy"></div><div class="tb"><h3>${esc(fullName(p))}</h3><small>${esc(cargo)}</small>${p.correo ? `<a class="ml" href="mailto:${esc(p.correo)}">${S16('mail')} <span>${esc(p.correo).replace('@', '<wbr>@')}</span></a>` : ''}<div class="bt"><button class="b1" data-hv="${p.id}">Hoja de vida</button>${btn2}</div></div></article>`;
+const tcard = (p, cargo, btn2) => `<article class="pz-tcard"><div class="ph"><img src="${img(p.foto)}" alt="Fotografía de ${esc(fullName(p))}" loading="lazy"></div><div class="tb"><h3>${esc(fullName(p))}</h3><small>${esc(cargo)}</small>${p.correo ? `<a class="ml" href="mailto:${esc(p.correo)}">${S16('mail')} <span>${esc(p.correo).replace('@', '<wbr>@')}</span></a>` : ''}<div class="bt"><button class="b1" data-hv="${p.id}">${autorizado(p) ? 'Hoja de vida' : 'Ficha pública'}</button>${btn2}</div></div></article>`;
 R('nosotros/plana-docente', (path, q) => {
   const pg0 = page('docentes'); if (!pg0 || !isPub(pg0)) return notFound(path);
   const cats = CATS(); const sel = cats.find(c => c.id === q.get('p')) || cats[0]; const s = (q.get('q') || '').trim();
-  let ds = docentesDe(sel.id).filter(autorizado); if (s) { const t = normTitle(s); ds = ds.filter(d => normTitle([fullName(d), d.especialidad].join(' ')).includes(t)); }
-  const total = P('personas').filter(p => p.tipo === 'Docente' && isPub(p) && autorizado(p)).length;
+  let ds = docentesDe(sel.id).filter(directorioVisible); if (s) { const t = normTitle(s); ds = ds.filter(d => normTitle([fullName(d), d.especialidad].join(' ')).includes(t)); }
+  const total = P('personas').filter(p => p.tipo === 'Docente' && isPub(p) && directorioVisible(p)).length;
   const body = `${pzPlanaTabs('d')}<span class="pz-kick">CONOCE A NUESTRA</span><h1 class="pz-big">PLANA DOCENTE ${yearNow()}</h1><p class="lead">${esc(stripTags(pg0.contenido))}</p>
    <div class="cat-tabs" role="group" aria-label="Programas de estudio">${cats.map(c => `<button data-cat="${c.id}" aria-pressed="${c.id === sel.id}">${ic(c.icon)}<span>${esc(c.label)}</span></button>`).join('')}</div>
    <form class="pz-search" data-ps><input name="q" value="${esc(s)}" placeholder="Buscar docente por nombre o especialidad" aria-label="Buscar docente"><button class="btn sm">${S16('search')} Buscar</button></form>
    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${esc(sel.label)} <span class="badge">${ds.length} docente(s) · ${total} en total</span></h2>
    ${ds.length ? `<div class="pz-tgrid">${ds.map(d => tcard(d, d.especialidad + (d.condicion ? ' · ' + d.condicion : ''), `<button class="b2" data-ud="${d.id}">Unidades didácticas</button>`)).join('')}</div>` : emptyMsg('docentes en esta categoría')}
-   <p class="pz-legal">${S16('shield')} Se publican únicamente los datos de los docentes que autorizaron su difusión, conforme a la Ley N.º 29733, Ley de Protección de Datos Personales. Información actualizada al ${fdate(nowISO())} por el responsable del Portal Web.</p>`;
+   <p class="pz-legal">${S16('shield')} Las fichas procedentes del portal institucional de origen muestran únicamente información profesional ya publicada. Los CV completos requieren autorización de difusión, conforme a la Ley N.º 29733. Información actualizada al ${fdate(nowISO())} por el responsable del Portal Web.</p>`;
   const html = shell(path, { title: 'Plana Docente ' + yearNow() + (sel ? ' - ' + sel.label : ''), desc: stripTags(pg0.contenido), crumbs: [['Nosotros', '#/nosotros/presentacion'], ['Plana Docente']], banner: { title: 'Nosotros', text: 'Conoce nuestra identidad, historia y el compromiso con la formación técnica.' }, side: nosotrosSide('plana-docente') + sidePromo('Docentes que inspiran el talento del futuro', 'La educación no cambia el mundo, cambia a las personas que van a cambiar el mundo. — Paulo Freire'), body });
   return { html, after: () => {
     $$('[data-cat]').forEach(b => b.onclick = () => go('#/nosotros/plana-docente?p=' + b.dataset.cat));
     $('[data-ps]').onsubmit = e => { e.preventDefault(); go('#/nosotros/plana-docente?p=' + sel.id + '&q=' + encodeURIComponent(e.target.q.value.trim())); };
     $$('[data-ud]').forEach(b => b.onclick = () => teacherModal(b.dataset.ud, sel.id));
-    $$('[data-hv]').forEach(b => b.onclick = () => cvDownload(byId('personas', b.dataset.hv), 'public'));
+    $$('[data-hv]').forEach(b => b.onclick = () => openPublicTeacher(b.dataset.hv));
   } };
 });
 R('nosotros/plana-jerarquica', path => {
@@ -7908,7 +7910,7 @@ R('nosotros/plana-jerarquica', path => {
    ${coords.length ? `<h2>Coordinadores de programas de estudio</h2><div class="pz-tgrid">${coords.map(({ pp, p }) => tcard(p, 'Coordinador(a) de ' + pp.nombre, `<button class="b2" data-ud="${p.id}" data-prog="${pp.id}">Unidades didácticas</button>`)).join('')}</div>` : ''}`;
   const html = shell(path, { title: 'Plana Jerárquica', desc: stripTags(pg0.contenido), crumbs: [['Nosotros', '#/nosotros/presentacion'], ['Plana Jerárquica']], banner: { title: 'Nosotros', text: 'Conoce nuestra identidad, historia y el compromiso con la formación técnica.' }, side: nosotrosSide('plana-jerarquica') + sidePromo('Trabajo en equipo para una mejor educación técnica'), body });
   return { html, after: () => {
-    $$('[data-hv]').forEach(b => b.onclick = () => cvDownload(byId('personas', b.dataset.hv), 'public'));
+    $$('[data-hv]').forEach(b => b.onclick = () => openPublicTeacher(b.dataset.hv));
     $$('[data-ud]').forEach(b => b.onclick = () => teacherModal(b.dataset.ud, b.dataset.prog));
     $$('[data-cg]').forEach(b => b.onclick = () => { const j = byId('jerarquica', b.dataset.cg); const p = persona(j.personaId); const a = areasAll().find(x => x.nombre === j.unidad || x.resp === fullName(p));
       modal({ title: 'Cargo académico', body: `<div class="profile"><img src="${img(p.foto)}" alt="Fotografía de ${esc(fullName(p))}"><div><h3 style="font-size:20px;margin-bottom:2px">${esc(fullName(p))}</h3><p style="color:var(--ink2)">${esc(j.cargo)}</p><dl class="kv"><dt>Órgano / unidad</dt><dd>${esc(j.unidad || '—')}</dd><dt>Correo institucional</dt><dd><a href="mailto:${esc((a && a.correo) || p.correo)}">${esc((a && a.correo) || p.correo)}</a></dd><dt>Formación</dt><dd>${esc(p.especialidad || '—')}</dd></dl><p style="font-size:12px;color:var(--muted);margin-top:12px">Por protección de datos personales (Ley N.º 29733) solo se publica información institucional.</p></div></div>` }); });
@@ -8221,11 +8223,11 @@ if (typeof SPECS === 'object' && SPECS.certificados) { const tb = SPECS.certific
 
 
 /* =========================================================
-   DATOS E IMÁGENES DE DEMOSTRACIÓN — INSTITUTO PUBLICO DE ICA
+   DATOS E IMÁGENES DE DEMOSTRACIÓN — IESTP CHINCHA
    Las imágenes del portal son ilustraciones genéricas; si un recurso externo no carga,
    se reemplazan por una imagen institucional generada.
    ========================================================= */
-const OF_URL = 'https://instituto-ica.example';
+const OF_URL = 'https://www.iestpchincha.edu.pe';
 const OF_IMG = OF_URL + '/assets/img/';
 const ofFoto = f => img('ph:person:m|' + f.replace(/\.svg$/, ''));
 /* Si una imagen del sitio oficial no carga, se usa una imagen generada */
@@ -8295,16 +8297,16 @@ const OF_DOC = [
 ];
 /* Equipo directivo publicado en /vista/plana-jerarquica: [personaId, cargo, órgano/unidad, correo institucional del área] */
 const OF_JER = [
-  ['dir', 'Director General', 'Dirección General', 'direcciongeneral@instituto-ica.example'],
-  ['a1', 'Jefa de Unidad Académica', 'Jefatura de Unidad Académica', 'unidadacademica@instituto-ica.example'],
-  ['a2', 'Jefa de Área de Administración', 'Jefatura de Área de Administración', 'administracion@instituto-ica.example'],
-  ['a3', 'Secretario Académico', 'Secretaría Académica', 'secretariaacademica@instituto-ica.example'],
-  ['d14', 'Jefe de Unidad de Formación Continua', 'Jefatura de Unidad de Formación Continua', 'formacioncontinua@instituto-ica.example'],
-  ['d23', 'Jefe de Área de Calidad', 'Coordinación de Área de Calidad', 'calidad@instituto-ica.example'],
-  ['d16', 'Jefa de Unidad de Bienestar y Empleabilidad', 'Jefatura de Unidad de Bienestar y Empleabilidad', 'bienestaryempleabilidad@instituto-ica.example'],
-  ['d15', 'Jefe de Unidad de Investigación', 'Jefatura de Unidad de Investigación', 'investigacion@instituto-ica.example'],
+  ['dir', 'Director General', 'Dirección General', 'direcciongeneral@www.iestpchincha.edu.pe'],
+  ['a1', 'Jefa de Unidad Académica', 'Jefatura de Unidad Académica', 'unidadacademica@www.iestpchincha.edu.pe'],
+  ['a2', 'Jefa de Área de Administración', 'Jefatura de Área de Administración', 'administracion@www.iestpchincha.edu.pe'],
+  ['a3', 'Secretario Académico', 'Secretaría Académica', 'secretariaacademica@www.iestpchincha.edu.pe'],
+  ['d14', 'Jefe de Unidad de Formación Continua', 'Jefatura de Unidad de Formación Continua', 'formacioncontinua@www.iestpchincha.edu.pe'],
+  ['d23', 'Jefe de Área de Calidad', 'Coordinación de Área de Calidad', 'calidad@www.iestpchincha.edu.pe'],
+  ['d16', 'Jefa de Unidad de Bienestar y Empleabilidad', 'Jefatura de Unidad de Bienestar y Empleabilidad', 'bienestaryempleabilidad@www.iestpchincha.edu.pe'],
+  ['d15', 'Jefe de Unidad de Investigación', 'Jefatura de Unidad de Investigación', 'investigacion@www.iestpchincha.edu.pe'],
 ];
-const OF_COORD = { apsti: ['d12', 'coordinacion.apsti@instituto-ica.example'], enf: ['d30', 'coordinacion.enfermeria@instituto-ica.example'], ashr: ['d6', 'coordinacion.ashr@instituto-ica.example'], cont: ['d26', 'coordinacion.contabilidad@instituto-ica.example'], pa: ['d40', 'coordinacion.agropecuaria@instituto-ica.example'] };
+const OF_COORD = { apsti: ['d12', 'coordinacion.apsti@www.iestpchincha.edu.pe'], enf: ['d30', 'coordinacion.enfermeria@www.iestpchincha.edu.pe'], ashr: ['d6', 'coordinacion.ashr@www.iestpchincha.edu.pe'], cont: ['d26', 'coordinacion.contabilidad@www.iestpchincha.edu.pe'], pa: ['d40', 'coordinacion.agropecuaria@www.iestpchincha.edu.pe'] };
 /* Programas de estudio: imagen, módulos, perfil y campo laboral publicados en /vista/<programa> */
 const OF_PROGS = {
   apsti: { nombre: OF_PROG.apsti, img: 'carrera/aptic.png', mods: ['Soporte, mantenimiento y seguridad de sistemas informáticos', 'Desarrollo y puesta en producción de sistemas informáticos', 'Diseño de aplicaciones web y plataforma TI'],

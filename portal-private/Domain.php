@@ -39,10 +39,13 @@ final class PortalDomain
         foreach($new['programas'] as $program){$academicId=$new['academico']['progMap'][$program['id']]??null;if($academicId!==null)foreach($new['academico']['programas'] as &$academic)if($academic['id']===$academicId){$academic['nombre']=$program['nombre'];$academic['activo']=($program['estado']??'')==='Publicado';$academic['pid']=$program['id'];}unset($academic);}
         foreach(self::changedRows($old['becarios']??[],$new['becarios']??[],'becarios') as $r){
             if($r['deleted']??false)continue;
-            if(!preg_match('/^[0-9]{8}$/',(string)($r['dni']??'')))throw new PortalError(422,'El DNI del beneficiario debe tener ocho dígitos.');
+            if(!empty($r['dni'])&&!preg_match('/^[0-9]{8}$/',(string)$r['dni']))throw new PortalError(422,'El DNI del beneficiario debe tener ocho dígitos.');
             $period=self::foreign($new['becasPeriodos'],$r['periodoId']??null,'Periodo de becas');self::foreign($new['programas'],$r['programaId']??null,'Programa');self::foreign($new['tiposBeca'],$r['tipoId']??null,'Tipo de beca');
             if(($period['estado']??'')==='Cerrado'&&PortalPolicy::role($user)!=='admin')throw new PortalError(403,'El periodo de becas está cerrado.');
-            foreach($new['becarios'] as $other)if(!($other['deleted']??false)&&$other['id']!==$r['id']&&($other['dni']??'')===$r['dni']&&$other['periodoId']===$r['periodoId']&&$other['programaId']===$r['programaId']&&$other['tipoId']===$r['tipoId'])throw new PortalError(422,'Beneficiario duplicado en ese periodo, programa y tipo de beca.');
+            foreach($new['becarios'] as $other){
+                $samePerson=!empty($r['dni'])?($other['dni']??'')===$r['dni']:PortalRules::normal(($other['nombres']??'').' '.($other['apellidos']??''))===PortalRules::normal(($r['nombres']??'').' '.($r['apellidos']??''));
+                if(!($other['deleted']??false)&&$other['id']!==$r['id']&&$samePerson&&$other['periodoId']===$r['periodoId']&&$other['programaId']===$r['programaId']&&$other['tipoId']===$r['tipoId'])throw new PortalError(422,'Beneficiario duplicado en ese periodo, programa y tipo de beca.');
+            }
         }
         $a=&$new['academico'];$o=$old['academico'];
         foreach(self::changedRows($o['estudiantes'],$a['estudiantes'],'academico.estudiantes') as $r){

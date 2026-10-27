@@ -102,6 +102,8 @@ final class PortalApp
                 }
                 if (isset($person['cv'])) {
                     if (($person['cv']['autoriza']['ok'] ?? false)!==true) {
+                        // Una revocación expresa también retira la ficha procedente del directorio original.
+                        if(($person['cv']['autoriza']['revocado']??false)===true)unset($person['fuente']);
                         unset($person['cv']);
                     } else {
                         foreach (['dni', 'nacimiento', 'fnac', 'sexo', 'direccion', 'domicilio', 'correoPersonal', 'celular', 'huella', 'docs'] as $key) {

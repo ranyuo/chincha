@@ -777,7 +777,7 @@
         {
           "name": "dni",
           "type": "text",
-          "required": true,
+          "required": false,
           "publishRequired": false,
           "unique": true,
           "max": 8
@@ -785,7 +785,7 @@
         {
           "name": "correo",
           "type": "email",
-          "required": true,
+          "required": false,
           "publishRequired": false,
           "unique": false
         },
@@ -813,7 +813,7 @@
         {
           "name": "condicion",
           "type": "select",
-          "required": true,
+          "required": false,
           "publishRequired": false,
           "unique": false
         },
@@ -1273,7 +1273,7 @@
         {
           "name": "dni",
           "type": "text",
-          "required": true,
+          "required": false,
           "publishRequired": false,
           "unique": false,
           "max": 8

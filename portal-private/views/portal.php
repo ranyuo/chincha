@@ -4724,6 +4724,7 @@ const sortO = a => a.slice().sort((x, y) => (x.orden || 0) - (y.orden || 0));
 const page = clave => P('paginas').find(p => p.clave === clave);
 const persona = id => P('personas').find(p => p.id === id);
 const fullName = p => p ? `${p.titulo ? p.titulo + ' ' : ''}${p.nombres} ${p.apellidos}` : '';
+const publicTeacherVisible = p => !p?.cv?.autoriza?.revocado && (p?.cv?.autoriza?.ok === true || /^https:\/\/(www\.)?iestpchincha\.edu\.pe\/nosotros\//.test(p?.fuente || ''));
 const progs = () => sortO(P('programas').filter(isPub));
 const progById = id => P('programas').find(p => p.id === id);
 const safePortalLink = (value, internal = true) => { if (typeof value !== 'string' || !value) return false; if (internal && value.startsWith('#/')) return true; try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol); } catch { return false; } };
@@ -5383,18 +5384,52 @@ function downloadSitemap() {
   const urls = ['/', '/programas', '/admision', '/matricula', '/becas', '/noticias', '/eventos', '/contacto', '/preguntas-frecuentes', '/mapa-del-sitio', '/servicios/mesa-de-partes', '/servicios/bolsa-laboral', '/servicios/consulta-certificados', '/servicios/complementarios'].concat(['presentacion', 'resena-historica', 'mision-vision', 'organizacion', 'reconocimientos', 'plana-jerarquica', 'plana-docente', 'campus-e-informes'].map(s => '/nosotros/' + s)).concat(['documentos-gestion', 'inversiones', 'libro-de-reclamaciones', 'licenciamiento', 'tupa', 'estadisticas', 'convocatorias'].map(s => '/transparencia/' + s)).concat(progs().map(p => '/programas/' + p.slug)).concat(pubNews().map(n => '/noticias/' + n.slug));
   downloadText(`\x3c?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${base}${u}</loc></url>`).join('\n')}\n</urlset>`, 'sitemap.xml', 'application/xml');
 }
+function searchPublicSite(query) {
+  const normalized = normTitle(query).replace(/[^a-z0-9]+/g, ' ').trim();
+  if (normalized.length < 2) return [];
+  const words = [...new Set(normalized.split(/\s+/))];
+  const results = [];
+  const add = (title, url, kind, description, extra = '') => {
+    if (!url || !safePortalLink(url)) return;
+    const titleText = normTitle(title).replace(/[^a-z0-9]+/g, ' ');
+    const text = normTitle([title, description, extra].join(' ')).replace(/[^a-z0-9]+/g, ' ');
+    if (!words.every(word => text.includes(word))) return;
+    const score = (titleText.trim() === normalized ? 100 : titleText.includes(normalized) ? 40 : 0) + words.filter(word => titleText.includes(word)).length;
+    results.push({ t: title, u: url, k: kind, d: clamp(description, 160), score });
+  };
+  const pageRoutes = { presentacion: '#/nosotros/presentacion', resena: '#/nosotros/resena-historica', mision: '#/nosotros/mision-vision', organizacion: '#/nosotros/organizacion', reconocimientos: '#/nosotros/reconocimientos', jerarquica: '#/nosotros/plana-jerarquica', docentes: '#/nosotros/plana-docente', campus: '#/nosotros/campus-e-informes', privacidad: '#/politica-de-privacidad', terminos: '#/terminos-de-uso', faq: '#/preguntas-frecuentes' };
+  P('paginas').filter(isPub).forEach(p => add(p.titulo, pageRoutes[p.clave], 'Página', stripTags(p.contenido)));
+  progs().forEach(p => add(p.nombre, '#/programas/' + p.slug, 'Programa de estudio', p.resumen || '', [p.codigo, stripTags(p.perfil), p.campo, ...(p.modulos || []).flatMap(m => [m.nombre, ...(m.uds || []).map(u => u.nombre)])].join(' ')));
+  pubNews().forEach(n => add(n.titulo, '#/noticias/' + n.slug, 'Noticia', n.resumen || '', stripTags(n.contenido)));
+  P('documentos').filter(d => d.estado === 'Publicado').forEach(d => add(d.nombre, '#/transparencia/documentos-gestion', 'Documento de gestión', d.descripcion || '', d.vigencia));
+  P('personas').filter(p => isPub(p) && publicTeacherVisible(p)).forEach(p => {
+    const role = P('jerarquica').find(j => isPub(j) && j.personaId === p.id);
+    const url = role ? '#/nosotros/plana-jerarquica' : '#/nosotros/plana-docente?p=' + encodeURIComponent((p.programas || [])[0] || 'emp') + '&q=' + encodeURIComponent([p.nombres, p.apellidos].join(' ').trim());
+    add(fullName(p), url, role ? 'Plana jerárquica' : 'Docente', [p.especialidad, role?.cargo].filter(Boolean).join(' · '));
+  });
+  [
+    ['Admisión', '#/admision', 'Requisitos, modalidades, prospecto y resultados de admisión.'],
+    ['Matrícula', '#/matricula', 'Requisitos, ratificación y orientación de matrícula.'],
+    ['Becas', '#/becas', 'Consulta de beneficiarios y exoneraciones por mérito académico.'],
+    ['Contacto y ubicación', '#/contacto', ['Dirección: ' + inst().direccion, 'Teléfono: ' + inst().telefono, 'Correo: ' + inst().correo].join(' · ')],
+    ['Licenciamiento', '#/transparencia/licenciamiento', 'Información institucional sobre el proceso de licenciamiento.'],
+    ['Estadísticas', '#/transparencia/estadisticas', 'Indicadores institucionales publicados.'],
+    ['Inversiones y recursos económicos', '#/transparencia/inversiones', 'Información sobre inversiones institucionales publicadas.'],
+    ['Convocatorias', '#/transparencia/convocatorias', 'Convocatorias institucionales publicadas.'],
+    ['TUPA', '#/transparencia/tupa', 'Texto Único de Procedimientos Administrativos, tasas y costos.'],
+    ['Mesa de Partes Virtual', '#/servicios/mesa-de-partes', 'Trámites, expedientes, solicitudes y documentos.'],
+    ['Bolsa laboral', '#/servicios/bolsa-laboral', 'Trabajo, empleo, ofertas, prácticas y empresas.'],
+    ['Consulta y verificación de documentos', '#/servicios/consulta-certificados', 'Certificados, títulos, constancias y códigos QR.'],
+    ['Libro de Reclamaciones', '#/servicios/libro-de-reclamaciones', 'Registro y seguimiento de reclamos y quejas.'],
+    ['Intranet institucional', '#/admin', 'Acceso a los servicios de docentes, estudiantes, egresados y empresas.']
+  ].forEach(([title, url, description]) => add(title, url, 'Sección o servicio', description));
+  P('tupa').filter(isPub).forEach(x => add(x.denominacion, '#/transparencia/tupa', 'TUPA', money(x.monto), [x.codigo, x.categoria].join(' ')));
+  return results.sort((a, b) => b.score - a.score || a.t.localeCompare(b.t, 'es'));
+}
 R('buscar', (path, q) => {
-  const s = (q.get('q') || '').trim(); const t = normTitle(s); let res = [];
-  if (t.length >= 2) {
-    P('paginas').filter(isPub).forEach(p => { if (normTitle(p.titulo + ' ' + stripTags(p.contenido)).includes(t)) res.push({ t: p.titulo, u: { presentacion: '#/nosotros/presentacion', resena: '#/nosotros/resena-historica', mision: '#/nosotros/mision-vision', organizacion: '#/nosotros/organizacion', reconocimientos: '#/nosotros/reconocimientos', jerarquica: '#/nosotros/plana-jerarquica', docentes: '#/nosotros/plana-docente', campus: '#/nosotros/campus-e-informes', privacidad: '#/politica-de-privacidad', terminos: '#/terminos-de-uso', faq: '#/preguntas-frecuentes' }[p.clave], k: 'Página', d: clamp(stripTags(p.contenido), 160) }); });
-    progs().forEach(p => { if (normTitle(p.nombre + ' ' + p.resumen + ' ' + p.modulos.flatMap(m => m.uds.map(u => u.nombre)).join(' ')).includes(t)) res.push({ t: p.nombre, u: '#/programas/' + p.slug, k: 'Programa de estudio', d: p.resumen }); });
-    pubNews().forEach(n => { if (normTitle(n.titulo + ' ' + n.resumen).includes(t)) res.push({ t: n.titulo, u: '#/noticias/' + n.slug, k: 'Noticia', d: n.resumen }); });
-    P('documentos').filter(d => d.estado === 'Publicado').forEach(d => { if (normTitle(d.nombre).includes(t)) res.push({ t: d.nombre, u: '#/transparencia/documentos-gestion', k: 'Documento de gestión', d: 'Vigencia ' + d.vigencia }); });
-    P('personas').filter(p => p.tipo === 'Docente' && isPub(p)).forEach(p => { if (normTitle(p.nombres + ' ' + p.apellidos + ' ' + p.especialidad).includes(t)) res.push({ t: fullName(p), u: '#/nosotros/plana-docente?p=' + (p.programas[0] || 'emp'), k: 'Docente', d: p.especialidad }); });
-    [['Mesa de Partes Virtual', '#/servicios/mesa-de-partes', 'mesa de partes tramite expediente solicitud documento'], ['Bolsa laboral', '#/servicios/bolsa-laboral', 'bolsa laboral trabajo empleo ofertas practicas empresas registro de empresas'], ['Consulta y verificación de documentos', '#/servicios/consulta-certificados', 'consulta verificacion certificado titulo constancia codigo qr documento'], ['Libro de Reclamaciones', '#/servicios/libro-de-reclamaciones', 'libro de reclamaciones reclamo queja'], ['Intranet institucional', '#/admin', 'intranet acceso login horario docente estudiante egresado empresa']].forEach(([n, u, k]) => { if (normTitle(n + ' ' + k).includes(t)) res.push({ t: n, u, k: 'Servicio', d: 'Servicio en línea del instituto.' }); });
-    P('tupa').filter(isPub).forEach(x => { if (normTitle(x.denominacion).includes(t)) res.push({ t: x.denominacion, u: '#/transparencia/tupa', k: 'TUPA', d: money(x.monto) }); });
-  }
-  const body = `<h1>Buscar en el sitio</h1><form data-bs role="search" style="display:flex;gap:8px;max-width:600px;margin-bottom:18px"><label class="sr-only" for="bs-q">Términos de búsqueda</label><input class="inp" id="bs-q" name="q" value="${esc(s)}" placeholder="¿Qué estás buscando?"><button class="btn">Buscar</button></form>${s ? `<p role="status">${res.length} resultado(s) para “<b>${esc(s)}</b>”</p>` : ''}${res.map(r => `<article class="card cb" style="margin-bottom:10px"><span class="badge">${esc(r.k)}</span><h2 style="font-size:17px;margin:6px 0 4px"><a href="${r.u}">${esc(r.t)}</a></h2><p style="margin:0;font-size:14px;color:var(--ink2)">${esc(r.d)}</p></article>`).join('') || (s ? '<div class="empty">No se encontraron resultados. Intente con otras palabras.</div>' : '')}`;
+  const s = (q.get('q') || '').trim(); const res = searchPublicSite(s);
+  const tooShort = normTitle(s).replace(/[^a-z0-9]+/g, ' ').trim().length < 2;
+  const body = `<h1>Buscar en el sitio</h1><form data-bs role="search" style="display:flex;gap:8px;max-width:600px;margin-bottom:18px"><label class="sr-only" for="bs-q">Términos de búsqueda</label><input class="inp" id="bs-q" name="q" value="${esc(s)}" placeholder="¿Qué estás buscando?"><button class="btn">Buscar</button></form>${s ? `<p role="status">${res.length} resultado(s) para “<b>${esc(s)}</b>”</p>` : ''}${res.map(r => `<article class="card cb" style="margin-bottom:10px"><span class="badge">${esc(r.k)}</span><h2 style="font-size:17px;margin:6px 0 4px"><a href="${esc(r.u)}">${esc(r.t)}</a></h2><p style="margin:0;font-size:14px;color:var(--ink2)">${esc(r.d)}</p></article>`).join('') || (s ? tooShort ? '<p class="notice" role="status">Escribe al menos dos letras o números para buscar.</p>' : '<div class="empty">No se encontraron resultados. Intente con otras palabras.</div>' : '')}`;
   return { html: shell(path, { title: 'Buscar', crumbs: [['Buscar']], banner: { title: 'Buscador' }, side: null, body }), after: () => $('[data-bs]').onsubmit = e => { e.preventDefault(); go('#/buscar?q=' + encodeURIComponent($('#bs-q').value.trim())); } };
 });
 function notFound(path) { return shell(path, { title: 'Página no encontrada', crumbs: [['Página no encontrada']], side: null, body: `<div class="empty" style="padding:50px"><h1 style="font-size:28px">Página no encontrada</h1><p>La página que buscas no existe o no está publicada.</p><a class="btn" href="#/">Ir al inicio</a> <a class="btn sec" href="#/mapa-del-sitio">Ver mapa del sitio</a></div>` }); }
@@ -5411,7 +5446,7 @@ function bindPublicChrome() {
     b.parentNode.addEventListener('keydown', e => { if (e.key === 'Escape') { b.parentNode.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); b.focus(); } });
   });
   if(!window.__publicNavOutside){window.__publicNavOutside=true;document.addEventListener('click', e => { if(!e.target.closest('.mainnav li'))$$('.mainnav li.open').forEach(x => {x.classList.remove('open');$('button.top',x)?.setAttribute('aria-expanded','false');}); });}
-  $$('[data-search]').forEach(f => f.onsubmit = e => { e.preventDefault(); go('#/buscar?q=' + encodeURIComponent(f.q.value.trim())); });
+  $$('[data-search]').forEach(f => f.onsubmit = e => { e.preventDefault(); go('#/buscar?q=' + encodeURIComponent(f.elements.namedItem('q').value.trim())); });
   const nl = $('[data-newsletter]'); if (nl) nl.onsubmit = e => { e.preventDefault(); const cap=checkCaptcha(nl,'cap-nl');if(cap)return toast(cap,'err'); const em = $('#nl').value; if (!reEmail.test(em)) return toast('Correo no válido', 'err'); coll('suscriptores').push({ correo: em, fecha: nowISO() }); if (!saveDB()) return; nl.reset(); toast('Tu suscripción quedó registrada. El envío por correo está pendiente de habilitación.', 'ok'); };
   // carrusel
   const slides = $$('.slide');
@@ -7876,7 +7911,7 @@ async function cvPdf(p) {
 
 /* ---------- Portal: Plana Docente (directorio del año en curso) y Equipo directivo ---------- */
 const autorizado = p => !!(p && p.cv && p.cv.autoriza && p.cv.autoriza.ok);
-const directorioVisible = p => !p?.cv?.autoriza?.revocado && (autorizado(p) || /^https:\/\/(www\.)?iestpchincha\.edu\.pe\/nosotros\//.test(p?.fuente || ''));
+const directorioVisible = publicTeacherVisible;
 function openPublicTeacher(id) { const p = byId('personas', id); if (!p) return; if (autorizado(p)) return cvDownload(p, 'public'); if (directorioVisible(p)) teacherModal(id, (p.programas || [])[0]); }
 const pzPlanaTabs = a => `<nav class="pz-ptabs" aria-label="Plana institucional"><a href="#/nosotros/plana-jerarquica" ${a === 'j' ? 'aria-current="page"' : ''}>Personal directivo jerárquico</a><a href="#/nosotros/plana-docente" ${a === 'd' ? 'aria-current="page"' : ''}>Docentes</a></nav>`;
 const tcard = (p, cargo, btn2) => `<article class="pz-tcard"><div class="ph"><img src="${img(p.foto)}" alt="Fotografía de ${esc(fullName(p))}" loading="lazy"></div><div class="tb"><h3>${esc(fullName(p))}</h3><small>${esc(cargo)}</small>${p.correo ? `<a class="ml" href="mailto:${esc(p.correo)}">${S16('mail')} <span>${esc(p.correo).replace('@', '<wbr>@')}</span></a>` : ''}<div class="bt"><button class="b1" data-hv="${p.id}">${autorizado(p) ? 'Hoja de vida' : 'Ficha pública'}</button>${btn2}</div></div></article>`;

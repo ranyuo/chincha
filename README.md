@@ -27,12 +27,15 @@ Subir archivos por sí solo **no sustituye el contenido ya guardado en MySQL**.
 
 La importación es una sustitución deliberada del contenido público: respalda primero cualquier edición institucional propia. Los horarios operativos, responsables internos y destinatarios de cada oficina deben configurarse por la institución. El envío de correo sigue deshabilitado como en el sistema original.
 
+[Corrección del buscador y actualización de un solo archivo en Hostinger](CORRECCION-BUSCADOR.md).
+
 ## Validación de desarrollo
 
 Usa exclusivamente una base desechable cuyo nombre termine en `_test` y una configuración privada `config.test.php`. Los scripts de pruebas pueden recrear sus tablas.
 
 ```sh
 node tests/demo-content.cjs
+node tests/browser-search.cjs
 php tests/demo-validation.php
 PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/run.php
 PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/parity.php

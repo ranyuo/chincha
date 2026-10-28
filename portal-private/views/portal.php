@@ -736,7 +736,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14px}
 .slide .cap .wrap{width:100%}
 .slide .cap h2{color:#fff;font-size:44px;max-width:620px;font-weight:800}
 .slide .cap p{color:rgba(255,255,255,.92);font-size:18px;max-width:520px}
-.hero-dots{position:absolute;z-index:3;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+/* Deja los indicadores sobre la franja que ocupan los accesos rápidos. */
+.hero-dots{position:absolute;z-index:3;bottom:82px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
 .hero-dots button{width:12px;height:12px;border-radius:50%;border:2px solid #fff;background:transparent;cursor:pointer;padding:0}
 .hero-dots button[aria-current=true]{background:var(--gold);border-color:var(--gold)}
 .hero-arrow{position:absolute;z-index:3;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.18);color:#fff;border:0;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:20px}
@@ -1271,6 +1272,7 @@ a.kpi:hover{transform:translateY(-3px);box-shadow:var(--sh2)}
   .stat+.stat::before{display:none}
   .to-top{right:22px;bottom:84px}
   .quick{margin-top:-34px}
+  .hero-dots{bottom:58px}
   .welcome img{box-shadow:var(--sh2)}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}

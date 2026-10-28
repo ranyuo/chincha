@@ -46,3 +46,32 @@ PISCO_TEST_CREDENTIALS=/ruta/credenciales-qa.json node tests/browser-chincha.cjs
 `browser-chincha.cjs` necesita Playwright y Chromium como herramientas externas de desarrollo, una instalación local de pruebas y un archivo privado con la contraseña del administrador QA (`password`; opcionalmente `install_key` para probar el actualizador). Nunca uses credenciales de producción.
 
 `chincha-import.php` se ejecuta después de `parity.php`; verifica respaldo, importación repetible, permisos y conservación de datos operativos. Los informes de calidad y las evidencias de la versión de demostración son históricos; la validación de esta adaptación figura en `MAPEO-CHINCHA.md`.
+
+## Correcciones del informe de Chincha (28/10/2026)
+
+Se corrigieron la persistencia de publicaciones de horarios, las categorías TUPA al editar,
+las variantes conocidas de categorías y las erratas 4.1/10.6, los filtros de vigencia por
+intervalos y sin año, y el orden natural de códigos. Las ayudas indican qué se exige al
+publicar. El archivo conocido de admisión se identifica como **temario histórico de 2025**;
+no sustituye el prospecto aprobado del proceso actual. Los documentos de gestión muestran
+su estado de publicación sin equipararlo a vigencia legal.
+
+Para una instalación existente: respalda archivos y MySQL; sube `Content.php`, `Schema.php`,
+`Portal.php`, `bootstrap.php` y `views/portal.php` en `portal-private/`. Conserva `config.php`
+y los adjuntos. Ejecuta `/actualizar.php` con la clave privada de esa instalación y **sin
+marcar la importación del contenido de Chincha**. La versión 5 normaliza únicamente los
+textos conocidos; conserva IDs, montos, cuentas y datos operativos. Repetir la actualización
+no vuelve a incrementar la revisión si no hay cambios. Un horario perdido debe publicarse
+nuevamente. No copies datos o cuentas QA al hosting.
+
+Regresión adicional, exclusivamente con la base desechable `_test` y el servidor local
+configurado con el mismo `PORTAL_CONFIG_FILE`:
+
+```sh
+PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/parity.php
+PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/functional-fixes.php
+PISCO_BASE_URL=http://127.0.0.1:8083 node tests/browser-functional-fixes.cjs
+```
+
+La prueba de navegador utiliza las cuentas sintéticas creadas por `parity.php` y modifica
+la base de pruebas. Detalle de cobertura, pendientes y despliegue: [CORRECCIONES-INFORME.md](CORRECCIONES-INFORME.md).

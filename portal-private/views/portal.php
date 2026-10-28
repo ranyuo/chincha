@@ -2155,7 +2155,7 @@ tr.pz-bad td{background:var(--errbg)}
 <body>
 <noscript><p style="padding:20px">Este portal requiere JavaScript habilitado.</p></noscript>
 <div id="app" aria-live="off"></div>
-<script>window.PORTAL_BOOTSTRAP = <?= json_encode($bootstrap, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?>;</script>
+<script>window.PORTAL_BOOTSTRAP = <?= json_encode(PortalContent::forJson($bootstrap), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?>;</script>
 <div class="ix ix-layer" id="ix-layer" data-palette="web"><div id="ixmodal"></div></div>
 <script>
 /* ==== academico.js ==== (módulos académicos integrados: horarios, certificación modular, títulos, bolsa laboral) */
@@ -2202,6 +2202,7 @@ const slotEnds = t => SLOTS[t].filter(s => s[0] !== "REC").map(s => s[1]);
 function seed(){ throw new Error('Los datos académicos se inicializan en PHP y MySQL.'); }
 let DB = HOST.loadAcad();
 if(!DB || DB.v !== 3){ DB = seed(); DB.progMap = {apsti:1, cont:2, pa:3, enf:4}; }
+DB.publicados = Object.assign({}, DB.publicados || {});
 rebuildSlots();
 function save(){ return HOST.saveAcad(DB) }
 
@@ -3162,8 +3163,8 @@ function consultaCert(pub){
   const q = S.ui.cq || "";
   const res = findEst(q);
   return `<section class="panel"><div><h2>Consulta institucional de certificaciones</h2><p class="note">Busque por DNI o por apellidos (mínimo 3 caracteres).</p></div>
-    <form class="f" data-form="cq"><div class="fld"><label for="cq">DNI o apellidos</label><input id="cq" name="cq" value="${esc(q)}" placeholder="Ej.: 70000001 o Ejemplo"></div><div class="fld" style="align-self:end"><button class="btn">Buscar</button></div></form>
-    ${!q ? `<p class="note">Pruebe con 70001001, 70001002 o “Ejemplo”.</p>` : ""}</section>
+    <form class="f" data-form="cq"><div class="fld"><label for="cq">DNI o apellidos</label><input id="cq" name="cq" value="${esc(q)}" placeholder="DNI o apellidos del alumno"></div><div class="fld" style="align-self:end"><button class="btn">Buscar</button></div></form>
+    ${!q ? `<p class="note">Busque por DNI o nombre de un alumno registrado.</p>` : ""}</section>
     ${q ? (res.length === 1 ? fichaEst(res[0], {pub}) : res.length ? `<section class="panel"><h2>${res.length} coincidencias</h2><div class="tw"><table><tbody>${res.map(e => `<tr><td>${mono(e.dni)}</td><td>${esc(e.nom)}</td><td>${prog(e.prog).cod}</td><td>${estPill(e.estado)}</td><td class="act"><button class="btn sec sm" data-act="pickEst" data-id="${e.dni}">Ver</button></td></tr>`).join("")}</tbody></table></div></section>` : `<div class="alert warn">No se encontró ningún estudiante con “${esc(q)}”.</div>`) : ""}`;
 }
 function docCert(e){
@@ -3223,7 +3224,7 @@ function consultaTitulo(pub){
   const res = ql.length >= 3 ? DB.titulos.filter(t => { const e = est(t.est); return e.dni === ql || e.nom.toLowerCase().includes(ql) }) : [];
   return `<section class="panel"><div><h2>Consulta de títulos emitidos</h2><p class="note">Verifique si una persona cuenta con título registrado por el ${esc(DB.cfg.siglas)}.</p></div>
     <form class="f" data-form="tq"><div class="fld"><label for="tq">DNI o apellidos</label><input id="tq" name="tq" value="${esc(q)}" placeholder="Ej.: 72458369 o Yupanqui"></div><div class="fld" style="align-self:end"><button class="btn">Consultar</button></div></form>
-    ${!q ? `<p class="note">Pruebe con 72458369 o “Yupanqui”.</p>` : ""}</section>
+    ${!q ? `<p class="note">Busque por DNI o nombre de un egresado registrado.</p>` : ""}</section>
     ${q ? (res.length ? res.map(t => fichaTitulo(t, pub)).join("") : `<div class="alert warn">No existe registro de título emitido por el ${esc(DB.cfg.siglas)} para “${esc(q)}”.</div>`) : ""}`;
 }
 function fichaTitulo(t, pub){
@@ -4074,6 +4075,7 @@ ACTIONS.toPublic = ACTIONS.toPublicApp = () => { location.hash = "#/" };
 ACTIONS.logout = () => HOST.logout();
 function syncDocentes(){ const ps = HOST.docentes(); DB.docentes.forEach(d => { const p = ps.find(x => x.id === d.per); if(p){ d.nom = p.nom; d.dni = p.dni; d.correo = p.correo; d.esp = p.esp; d.cond = p.cond } }) }
 function sync(){
+  DB.publicados = Object.assign({}, DB.publicados || {});
   DB.perms = DB.perms || {}; Object.entries({admin:2, dir:1, acad:2, adm:1}).forEach(([r,v]) => { DB.perms[r] = DB.perms[r] || {}; if(DB.perms[r].alumnos == null) DB.perms[r].alumnos = v });
   const i = HOST.inst(); Object.assign(DB.cfg, {nombre:i.nombre, siglas:i.siglas, director:i.director, direccion:i.direccion, web:i.web});
   DB.progMap = DB.progMap || {};
@@ -5030,7 +5032,7 @@ R('admision', (path, q) => {
   const tbtn = (pid, t) => { const r = (a.resultados[pid] || {})[t]; return r ? `<button class="btn xs violet" data-res="${pid}|${t}">Ver Resultados</button>` : '<span aria-label="Sin resultados publicados" style="color:var(--muted)">—</span>'; };
   const body = `<p style="text-align:center;margin:0;color:var(--link);font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:13px">${a.vigente ? 'Bienvenido al proceso de' : 'Proceso histórico (cerrado)'}</p><h1 style="text-align:center;padding-bottom:0" class="noline">${esc(a.titulo)}</h1>${a.descripcion ? `<p class="lead" style="text-align:center;max-width:760px;margin:0 auto 16px">${esc(a.descripcion)}</p>` : ''}
    ${!a.vigente ? `<div class="notice warn">Estás consultando el proceso ${esc(a.anio)}, que ya concluyó. <a href="#/admision">Ver el proceso vigente</a>.</div>` : ''}
-   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:14px 0 22px">${a.prospecto ? `<button class="btn" data-docx="prospecto">${ic('file').replace('<svg', '<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"')} PROSPECTO DE ADMISIÓN</button><button class="btn ghost sm" data-dlx="prospecto" aria-label="Descargar prospecto">${ic('download').replace('<svg', '<svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"')}</button>` : ''}${a.reglamento ? `<button class="btn" data-docx="reglamento">${ic('file').replace('<svg', '<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"')} REGLAMENTO DE ADMISIÓN</button><button class="btn ghost sm" data-dlx="reglamento" aria-label="Descargar reglamento">${ic('download').replace('<svg', '<svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"')}</button>` : ''}</div>
+   <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:14px 0 22px">${a.prospecto ? `<button class="btn" data-docx="prospecto">${ic('file').replace('<svg', '<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"')} ${esc(prospectusLabel(a.prospecto))}</button><button class="btn ghost sm" data-dlx="prospecto" aria-label="Descargar ${esc(prospectusLabel(a.prospecto))}">${ic('download').replace('<svg', '<svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"')}</button>` : ''}${a.reglamento ? `<button class="btn" data-docx="reglamento">${ic('file').replace('<svg', '<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"')} REGLAMENTO DE ADMISIÓN</button><button class="btn ghost sm" data-dlx="reglamento" aria-label="Descargar reglamento">${ic('download').replace('<svg', '<svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2"')}</button>` : ''}</div>
    <section><h2>Resultados por programa de estudio</h2><div class="tbl-wrap"><table class="tbl"><caption class="sr-only">Resultados del proceso de admisión ${esc(a.anio)} por programa y turno</caption><thead><tr><th class="c">N.º</th><th>Programa de estudio</th><th class="c">Resultado turno mañana</th><th class="c">Resultado turno tarde</th></tr></thead><tbody>${progs().map((p, i) => `<tr><td class="c">${i + 1}</td><td>${esc(p.nombre)}</td><td class="c">${tbtn(p.id, 'M')}</td><td class="c">${tbtn(p.id, 'T')}</td></tr>`).join('')}</tbody></table></div></section>
    <div class="grid g2" style="margin-top:22px">
      <section><h2>Cronograma</h2>${(a.cronograma || []).length ? `<div class="tbl-wrap"><table class="tbl light"><thead><tr><th>Actividad</th><th>Fecha</th></tr></thead><tbody>${a.cronograma.map(c => `<tr><td>${esc(c.actividad)}</td><td>${esc(c.fecha)}</td></tr>`).join('')}</tbody></table></div>` : emptyMsg('actividades')}</section>
@@ -5107,10 +5109,10 @@ const DST = { page: 1, size: 5 };
 R('transparencia', p => ROUTES['transparencia/documentos-gestion'](p, new URLSearchParams()));
 R('transparencia/documentos-gestion', path => {
   const docs = P('documentos').filter(d => ['Publicado', 'Histórico'].includes(d.estado) || d._preview);
-  const years = [...new Set(docs.map(d => String(d.vigencia).slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
+  const years = validityOptions(docs);
   const body = `<h1>Documentos de Gestión</h1><p class="lead">Normas, planes y documentos que orientan nuestra institución. Se muestran por defecto los documentos vigentes; puede consultar versiones anteriores con el filtro de estado.</p>
    <form class="filters" data-df role="search"><div class="field"><label for="df-t">Tipo de documento</label><select id="df-t" name="tipo"><option value="">Todos</option>${coll('tiposDocumento').map(t => `<option value="${t.id}">${esc(t.nombre)}</option>`).join('')}</select></div>
-   <div class="field"><label for="df-y">Año de vigencia</label><select id="df-y" name="anio"><option value="">Todos</option>${years.map(y => `<option>${y}</option>`).join('')}</select></div>
+   <div class="field"><label for="df-y">Año de vigencia</label><select id="df-y" name="anio"><option value="">Todos</option>${years.map(([y,label]) => `<option value="${y}">${label}</option>`).join('')}</select></div>
    <div class="field"><label for="df-e">Estado</label><select id="df-e" name="estado"><option value="Publicado">Vigentes</option><option value="Histórico">Históricos</option><option value="">Todos</option></select></div>
    <div class="field"><label for="df-s">Buscar documento</label><input id="df-s" name="s" placeholder="Nombre del documento"></div>
    <div class="actions"><button class="btn">Buscar</button><button type="button" class="btn ghost" data-clear>Limpiar filtros</button></div></form><div id="dres"></div>`;
@@ -5120,9 +5122,9 @@ R('transparencia/documentos-gestion', path => {
       const f = $('[data-df]'); DST.page = 1;
       const run = () => {
         const v = Object.fromEntries(new FormData(f)); const s = normTitle(v.s);
-        const rows = sortO(docs.filter(d => (!v.tipo || d.tipoId === v.tipo) && (!v.anio || String(d.vigencia).startsWith(v.anio)) && (!v.estado || d.estado === v.estado || (d._preview && v.estado === 'Publicado')) && (!s || normTitle(d.nombre).includes(s))));
+        const rows = sortO(docs.filter(d => (!v.tipo || d.tipoId === v.tipo) && validityMatches(d.vigencia, v.anio) && (!v.estado || d.estado === v.estado || (d._preview && v.estado === 'Publicado')) && (!s || normTitle(d.nombre).includes(s))));
         const pg = rows.slice((DST.page - 1) * DST.size, DST.page * DST.size);
-        $('#dres').innerHTML = rows.length ? `<p role="status">Total: <b>${rows.length}</b> documento(s)</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th class="c">N.º</th><th>Documento</th><th>Tipo</th><th>Vigencia</th><th>Versión</th><th>Estado</th><th class="c">Acciones</th></tr></thead><tbody>${pg.map((d, i) => { const fl = docFile(d); return `<tr><td class="c">${(DST.page - 1) * DST.size + i + 1}</td><td><span class="file-chip" style="background:none;border:0;padding:0"><span class="ft">PDF</span> ${esc(d.nombre)}</span>${d.refModulo ? `<br><small style="color:var(--muted)">Documento administrado desde el módulo Admisión</small>` : ''}</td><td>${esc(tipoDoc(d.tipoId))}</td><td>${esc(d.vigencia)}</td><td>${esc(d.version)}</td><td>${d.estado === 'Histórico' ? '<span class="badge gray">Histórico</span>' : '<span class="badge ok">Vigente</span>'}</td><td class="c" style="white-space:nowrap">${fl ? `<button class="btn xs sec" data-v="${d.id}">Ver documento</button> <button class="btn xs" data-d="${d.id}">Descargar</button>` : '<span style="color:var(--muted)">No disponible</span>'}</td></tr>`; }).join('')}</tbody></table></div>${pager(rows.length, DST.page, DST.size, [5, 10, 25])}` : `<div class="empty" role="status">No se encontraron documentos con los criterios seleccionados.</div>`;
+        $('#dres').innerHTML = rows.length ? `<p role="status">Total: <b>${rows.length}</b> documento(s)</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th class="c">N.º</th><th>Documento</th><th>Tipo</th><th>Vigencia</th><th>Versión</th><th>Estado</th><th class="c">Acciones</th></tr></thead><tbody>${pg.map((d, i) => { const fl = docFile(d); return `<tr><td class="c">${(DST.page - 1) * DST.size + i + 1}</td><td><span class="file-chip" style="background:none;border:0;padding:0"><span class="ft">PDF</span> ${esc(d.nombre)}</span>${d.refModulo ? `<br><small style="color:var(--muted)">Documento administrado desde el módulo Admisión</small>` : ''}</td><td>${esc(tipoDoc(d.tipoId))}</td><td>${esc(d.vigencia)}</td><td>${esc(d.version)}</td><td>${d.estado === 'Histórico' ? '<span class="badge gray">Histórico</span>' : '<span class="badge ok">Publicado</span>'}</td><td class="c" style="white-space:nowrap">${fl ? `<button class="btn xs sec" data-v="${d.id}">Ver documento</button> <button class="btn xs" data-d="${d.id}">Descargar</button>` : '<span style="color:var(--muted)">No disponible</span>'}</td></tr>`; }).join('')}</tbody></table></div>${pager(rows.length, DST.page, DST.size, [5, 10, 25])}` : `<div class="empty" role="status">No se encontraron documentos con los criterios seleccionados.</div>`;
         bindPager($('#dres'), DST, run);
         $$('[data-v]').forEach(b => b.onclick = () => openDoc(docFile(docs.find(d => d.id === b.dataset.v))));
         $$('[data-d]').forEach(b => b.onclick = () => downloadDoc(docFile(docs.find(d => d.id === b.dataset.d))));
@@ -5218,7 +5220,7 @@ R('transparencia/licenciamiento', path => {
   return { html, after: () => $$('[data-ld]').forEach(a => a.onclick = e => { e.preventDefault(); openDoc(L.documentos[+a.dataset.ld]); }) };
 });
 R('transparencia/tupa', (path, q) => {
-  const y = DB.tupaDocs.anio; const uit = DB.config.uit[y] || 0; const rows = P('tupa').filter(t => isPub(t) && t.anio == y);
+  const y = DB.tupaDocs.anio; const uit = DB.config.uit[y] || 0; const rows = P('tupa').filter(t => isPub(t) && t.anio == y).sort(tupaOrder);
   const cats = [...new Set(rows.map(r => r.categoria))];
   const body = `<h1>Texto Único de Procedimientos Administrativos (TUPA) ${esc(y)}</h1><p class="lead">Relación de derechos, tasas y montos vigentes. Base de cálculo: UIT ${esc(y)} = <b>${money(uit)}</b>.</p>
    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">${DB.tupaDocs.resolucion ? '<button class="btn sec" data-td="resolucion">Resolución de aprobación (PDF)</button>' : ''}${DB.tupaDocs.tupa ? '<button class="btn" data-td="tupa">TUPA vigente (PDF)</button>' : ''}</div>
@@ -5583,10 +5585,25 @@ function bindRTE(root, onChange) {
 }
 
 /* ---------- Campos de formulario genéricos ---------- */
+const validityYears = value => {
+  const years = [...String(value ?? '').matchAll(/\b(?:19|20|21)\d{2}\b/g)].map(m => +m[0]);
+  const range = String(value ?? '').match(/\b((?:19|20|21)\d{2})\s*(?:[-–—/]|al?|hasta)\s*((?:19|20|21)\d{2})\b/i);
+  if (range && +range[2] >= +range[1]) for (let y = +range[1]; y <= +range[2]; y++) years.push(y);
+  return [...new Set(years)].sort((a,b) => a-b).map(String);
+};
+const validityOptions = docs => {
+  const values = [...new Set(docs.flatMap(d => validityYears(d.vigencia)))].sort().reverse().map(y => [y,y]);
+  if (docs.some(d => !validityYears(d.vigencia).length)) values.push(['sin-anio','Sin año especificado']);
+  return values;
+};
+const validityMatches = (value, year) => !year || (year === 'sin-anio' ? !validityYears(value).length : validityYears(value).includes(String(year)));
+const tupaOrder = (a,b) => String(a.codigo).localeCompare(String(b.codigo), 'es', {numeric:true});
+// Only this verified file is a historical syllabus, regardless of the admission process year.
+const prospectusLabel = file => /(?:^|\/)PROSPECTO_DE_ADMISION-2f122f70\.pdf(?:[?#]|$)/.test(file?.url || '') ? 'Temario de admisión 2025 (histórico)' : 'Prospecto de admisión';
 function optList(f, rec) { const o = typeof f.opts === 'function' ? f.opts(rec) : f.opts; return (o || []).map(x => Array.isArray(x) ? x : [x, x]); }
 function fieldHTML(f, rec) {
   const v = rec[f.n]; const id = 'f_' + f.n; const req = f.req ? ' <span class="req">*</span>' : (f.pubReq ? ' <span class="req" title="Obligatorio para publicar">*</span>' : '');
-  const hint = f.hint ? `<div class="hint">${f.hint}</div>` : '';
+  const hint = (f.hint || f.pubReq) ? `<div class="hint">${f.pubReq ? 'Obligatorio al publicar. Puede guardarse vacío como borrador. ' : ''}${f.hint || ''}</div>` : '';
   const lab = `<label for="${id}">${esc(f.l)}${req}</label>`;
   const dis = f.ro && f.ro(rec) ? 'disabled' : '';
   let c = '';
@@ -5864,7 +5881,7 @@ SPECS.documentos = {
   key: 'documentos', mod: 'documentos', coll: 'documentos', title: 'Documentos de gestión', singular: 'documento', icon: 'file', states: ['Borrador', 'Publicado', 'Histórico'], label: r => `${r.nombre} v${r.version}`,
   sub: 'Administra los documentos institucionales, sus versiones y su publicación.',
   tabs: () => tabsBar([['list', 'Listado de documentos', '#/admin/documentos'], ['cat', 'Categorías', '#/admin/tiposdoc']], 'list'),
-  search: ['nombre', 'descripcion'], filters: [{ n: 'tipoId', l: 'Tipo de documento', opts: () => coll('tiposDocumento').map(t => [t.id, t.nombre]) }, { n: 'estado', l: 'Estado', opts: ['Borrador', 'En revisión', 'Publicado', 'Histórico'] }, { n: 'anio', l: 'Año de vigencia', opts: () => [...new Set(coll('documentos').map(d => String(d.vigencia).slice(0, 4)))].sort().reverse(), test: (r, v) => String(r.vigencia).startsWith(v) }],
+  search: ['nombre', 'descripcion'], filters: [{ n: 'tipoId', l: 'Tipo de documento', opts: () => coll('tiposDocumento').map(t => [t.id, t.nombre]) }, { n: 'estado', l: 'Estado', opts: ['Borrador', 'En revisión', 'Publicado', 'Histórico'] }, { n: 'anio', l: 'Año de vigencia', opts: () => validityOptions(coll('documentos')), test: (r, v) => validityMatches(r.vigencia, v) }],
   preview: () => '#/transparencia/documentos-gestion',
   cols: [{ l: 'Documento', f: r => `<span class="file-chip" style="background:none;border:0;padding:0"><span class="ft">PDF</span><b>${esc(r.nombre)}</b></span>${r.refModulo ? '<br><small class="badge violet">Referencia: módulo Admisión</small>' : ''}` }, { l: 'Tipo', f: r => esc(tipoDoc(r.tipoId)) }, { l: 'Vigencia', f: r => esc(r.vigencia) }, { l: 'Versión', cls: 'c', f: r => esc(r.version) }, { l: 'Estado', f: r => stBadge(r.estado) }, { l: 'Publicación', f: r => fshort(r.fechaPub) }],
   rowActs: r => ib('ver', 'eye', 'Ver archivo') + ib('ver2', 'history', 'Historial de versiones') + ib('nv', 'copy', 'Nueva versión'),
@@ -5901,11 +5918,11 @@ SPECS.tupa = {
   key: 'tupa', mod: 'tupa', coll: 'tupa', title: 'TUPA – conceptos', singular: 'concepto', icon: 'money', states: ['Borrador', 'Publicado'], label: r => `${r.codigo} ${r.denominacion}`,
   tabs: () => tabsBar([['list', 'Conceptos', '#/admin/tupa'], ['cfg', 'UIT y documentos', '#/admin/tupacfg']], 'list'),
   search: ['codigo', 'denominacion'], filters: [{ n: 'categoria', l: 'Categoría', opts: () => [...new Set(coll('tupa').map(t => t.categoria))] }, { n: 'anio', l: 'Año', opts: () => [...new Set(coll('tupa').map(t => String(t.anio)))] }],
-  sort: (a, b) => String(a.codigo).localeCompare(b.codigo), preview: () => '#/transparencia/tupa',
+  sort: tupaOrder, preview: () => '#/transparencia/tupa',
   cols: [{ l: 'Año', f: r => r.anio }, { l: 'Código', f: r => esc(r.codigo) }, { l: 'Categoría', f: r => esc(r.categoria) }, { l: 'Denominación', f: r => esc(r.denominacion) }, { l: 'Monto', cls: 'num', f: r => money(r.monto) }, { l: '% UIT', cls: 'num', f: r => DB.config.uit[r.anio] ? (r.monto / DB.config.uit[r.anio] * 100).toFixed(2) + ' %' : '—' }, { l: 'Estado', f: r => stBadge(r.estado) }],
   exportCSV: { head: ['Año', 'Código', 'Categoría', 'Denominación', 'Monto', 'Cuenta'], row: r => [r.anio, r.codigo, r.categoria, r.denominacion, r.monto, r.cuenta] },
   defaults: () => ({ anio: DB.tupaDocs.anio, cuenta: 'Banco de la Nación – Cta. Cte. (ver en ventanilla)' }),
-  fields: [{ n: 'anio', l: 'Año', t: 'number', req: true }, { n: 'codigo', l: 'Código', req: true }, { n: 'categoria', l: 'Categoría', t: 'select', req: true, opts: ['Admisión', 'Matrícula', 'Certificación', 'Titulación', 'Trámites', 'Pensiones y otros pagos'] }, { n: 'monto', l: 'Monto (S/)', t: 'number', step: '0.01', min: 0, req: true }, { n: 'denominacion', l: 'Denominación del procedimiento', req: true, full: true }, { n: 'cuenta', l: 'Cuenta / lugar de pago', full: true }, { n: 'requisitos', l: 'Requisitos', t: 'textarea', full: true }],
+  fields: [{ n: 'anio', l: 'Año', t: 'number', req: true }, { n: 'codigo', l: 'Código', req: true }, { n: 'categoria', l: 'Categoría', t: 'select', req: true, opts: rec => [...new Set([...coll('tupa').map(t => t.categoria), rec.categoria, 'Admisión', 'Matrícula', 'Certificación', 'Titulación', 'Trámites', 'Pensiones y otros pagos'].filter(Boolean))] }, { n: 'monto', l: 'Monto (S/)', t: 'number', step: '0.01', min: 0, req: true }, { n: 'denominacion', l: 'Denominación del procedimiento', req: true, full: true }, { n: 'cuenta', l: 'Cuenta / lugar de pago', full: true }, { n: 'requisitos', l: 'Requisitos', t: 'textarea', full: true }],
   validate: w => { const d = alive('tupa').find(t => t.id !== w.id && t.anio == w.anio && normTitle(t.codigo) === normTitle(w.codigo)); return d ? { codigo: 'El código ya existe para el año ' + w.anio + '.' } : {}; },
 };
 /* ---------- Nosotros ---------- */
@@ -6118,13 +6135,13 @@ SPECS.admision = {
   key: 'admision', mod: 'admision', coll: 'admisiones', title: 'Gestión del proceso de admisión', singular: 'proceso de admisión', icon: 'clipboard', states: ['Borrador', 'Publicado', 'Cerrado'], label: r => 'Admisión ' + r.anio, softDelete: false,
   sub: 'Administra la información, documentos y resultados por programa y turno. Los procesos anteriores se conservan como histórico.',
   sort: (a, b) => b.anio - a.anio, preview: r => '#/admision' + (r.vigente ? '' : '?anio=' + r.anio),
-  cols: [{ l: 'Año', f: r => `<b>${r.anio}</b>` }, { l: 'Título', f: r => esc(r.titulo) }, { l: 'Documentos', f: r => `${r.prospecto ? '<span class="badge">Prospecto</span>' : ''} ${r.reglamento ? '<span class="badge">Reglamento</span>' : ''}` }, { l: 'Resultados publicados', cls: 'num', f: r => Object.values(r.resultados || {}).reduce((a, x) => a + (x.M ? 1 : 0) + (x.T ? 1 : 0), 0) }, { l: 'Vigente', f: r => r.vigente ? '<span class="badge ok">Proceso vigente</span>' : '' }, { l: 'Estado', f: r => stBadge(r.estado) }],
+  cols: [{ l: 'Año', f: r => `<b>${r.anio}</b>` }, { l: 'Título', f: r => esc(r.titulo) }, { l: 'Documentos', f: r => `${r.prospecto ? `<span class="badge">${esc(prospectusLabel(r.prospecto))}</span>` : ''} ${r.reglamento ? '<span class="badge">Reglamento</span>' : ''}` }, { l: 'Resultados publicados', cls: 'num', f: r => Object.values(r.resultados || {}).reduce((a, x) => a + (x.M ? 1 : 0) + (x.T ? 1 : 0), 0) }, { l: 'Vigente', f: r => r.vigente ? '<span class="badge ok">Proceso vigente</span>' : '' }, { l: 'Estado', f: r => stBadge(r.estado) }],
   defaults: () => ({ anio: yearNow() + 1, titulo: 'Inscripciones del Concurso de Admisión ' + (yearNow() + 1), resultados: {}, historial: [], vacantes: {}, cronograma: [], requisitos: [], modalidades: [], vigente: false }),
   fields: w => [
     { n: 'anio', l: 'Año del proceso', t: 'number', req: true, unique: true, ro: () => !!byId('admisiones', w.id) },
     { n: 'titulo', l: 'Título principal', req: true },
     { n: 'subtitulo', l: 'Subtítulo', full: true }, { n: 'descripcion', l: 'Descripción o mensaje introductorio', t: 'textarea', full: true },
-    { n: 'prospecto', l: 'Prospecto de admisión', t: 'file' }, { n: 'reglamento', l: 'Reglamento de admisión', t: 'file', hint: 'Se muestra también en Documentos de Gestión (referencia).' },
+    { n: 'prospecto', l: 'Prospecto de admisión', t: 'file', hint: 'El archivo heredado es un temario de 2025. Sustitúyalo por el prospecto aprobado del proceso correspondiente.' }, { n: 'reglamento', l: 'Reglamento de admisión', t: 'file', hint: 'Se muestra también en Documentos de Gestión (referencia).' },
     { n: 'resultados', l: 'Resultados por programa de estudio y turno', t: 'custom', render: resHTML, bind: bindRes },
     { n: 'vacantes', l: 'Vacantes por programa y turno', t: 'custom', render: x => `<div class="tbl-wrap"><table class="tbl light subtbl"><thead><tr><th>Programa</th><th style="width:110px">Mañana</th><th style="width:110px">Tarde</th></tr></thead><tbody>${sortO(alive('programas')).map(p => `<tr><td>${esc(p.nombre)}</td>${['M', 'T'].map(t => `<td><input class="inp" type="number" min="0" value="${((x.vacantes || {})[p.id] || {})[t] || ''}" data-vac="${p.id}|${t}" aria-label="Vacantes ${t === 'M' ? 'mañana' : 'tarde'} ${esc(p.nombre)}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`, bind: (x, box) => $$('[data-vac]', box).forEach(i => i.oninput = () => { const [p, t] = i.dataset.vac.split('|'); x.vacantes = x.vacantes || {}; x.vacantes[p] = x.vacantes[p] || {}; x.vacantes[p][t] = i.value === '' ? 0 : +i.value; }) },
     { n: 'cronograma', l: 'Cronograma', t: 'rows', cols: [{ n: 'actividad', l: 'Actividad' }, { n: 'fecha', l: 'Fecha(s)' }] },
@@ -7344,10 +7361,10 @@ function lrPage(path, q0) {
    <div data-pane="i" ${cur === 'i' ? '' : 'hidden'}><section class="card cb pz-lr-inf">
      <div class="pz-lr-2"><div class="rec">${sic('file', 22)}<b>Reclamo</b><p>Disconformidad relacionada con el servicio educativo o con los trámites brindados por el instituto.</p><small>Plazo de respuesta: ${c.plazoReclamo} días hábiles</small></div><div class="que">${sic('alert', 22)}<b>Queja</b><p>Malestar o descontento respecto a la atención recibida: trato, demora, falta de información, etc.</p><small>Plazo de respuesta: ${c.plazoQueja} días hábiles</small></div></div>
      <h3>Flujo de atención</h3><ol class="pz-flow"><li><b>Recibido</b><span>Registro y constancia PDF descargable.</span></li><li><b>Derivado</b><span>El responsable lo deriva al área competente.</span></li><li><b>En atención</b><span>El área evalúa y propone la respuesta.</span></li><li><b>Atendido</b><span>La respuesta queda disponible en el seguimiento del portal.</span></li></ol>
-     <h3>Responsable de la atención</h3><p><b>${esc(c.responsable)}</b> · ${esc(c.cargo)}<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></p>
+     <h3>Responsable de la atención</h3><p><b>${esc(c.responsable || 'Responsable pendiente de asignación')}</b> · ${esc(c.cargo)}<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></p>
      <h3>A tener en cuenta</h3><ul><li>El plazo se cuenta desde el día hábil siguiente al registro.</li><li>La formulación del reclamo no impide acudir a otras vías de solución de controversias.</li><li>Base normativa: Decreto Supremo N.º 042-2011-PCM, que obliga a las entidades públicas a contar con un Libro de Reclamaciones.</li></ul></section></div>
    <div class="pz-info3"><div>${ic('shield')}<b>Registro seguro</b><span>Tu información se registra de manera segura y protegida (Ley N.º 29733).</span></div><div>${ic('search')}<b>Seguimiento</b><span>Con tu código consultas el estado en cualquier momento.</span></div><div>${ic('mail')}<b>Notificación</b><span>Consulta el estado y la respuesta con tu código de seguimiento.</span></div></div>`;
-  const side = `<section class="side-box"><h2>Responsable de la atención</h2><div class="pad" style="font-size:13.5px"><b>${esc(c.responsable)}</b><br>${esc(c.cargo)}<br>✉️ <a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></div></section>
+  const side = `<section class="side-box"><h2>Responsable de la atención</h2><div class="pad" style="font-size:13.5px"><b>${esc(c.responsable || 'Responsable pendiente de asignación')}</b><br>${esc(c.cargo)}<br>✉️ <a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></div></section>
    <section class="side-box"><h2>Plazos de respuesta</h2><div class="pad" style="font-size:13.5px"><ul style="padding-left:18px;margin:0"><li>Reclamos: hasta <b>${c.plazoReclamo} días hábiles</b>.</li><li>Quejas: hasta <b>${c.plazoQueja} días hábiles</b>.</li></ul></div></section>
    <section class="side-box"><h2>¿Necesitas ayuda?</h2><div class="pad" style="font-size:13.5px">📞 ${esc(i.telefono)}<br>✉️ ${esc(c.correo)}<br>🕗 ${esc(i.horario)}</div></section>`;
   const html = shell(path, { title: 'Libro de Reclamaciones', desc: `Libro de Reclamaciones Virtual del ${inst().nombre}: registra tu reclamo o queja y consulta su estado.`, crumbs: [['Servicios', '#/servicios'], ['Libro de Reclamaciones']], banner: { kicker: 'Servicios en línea', title: 'Libro de Reclamaciones', text: 'Porque un mejor servicio también se construye escuchándote' }, side, body });
@@ -7463,7 +7480,7 @@ function lrDashboard() {
     + `<h2 class="pz-h2">Resumen general</h2><div class="kpis">${kpi('book', 'var(--blue)', all.length, 'Total registrados', '#/admin/reclamos/bandeja')}${kpi('clock', 'var(--warn)', pend.length, 'Pendientes')}${kpi('restore', 'var(--navy2)', proc.length, 'En proceso')}${kpi('check', 'var(--ok)', aten.length, 'Atendidos')}${kpi('alert', venc.length ? 'var(--err)' : 'var(--ok)', venc.length, 'Plazo vencido')}${kpi('bell', xv.length ? 'var(--warn)' : 'var(--ok)', xv.length, `Por vencer (≤ ${c.alerta} días)`)}</div>
     <div class="pz-dash"><div class="panel"><h2><span>${sic('list')} Reclamos recientes</span><a class="btn xs" href="#/admin/reclamos/bandeja">Ver todos</a></h2><div class="tbl-wrap" style="border:0"><table class="tbl light"><thead><tr><th>Código</th><th>Usuario</th><th>Tipo</th><th>Fecha</th><th>Plazo</th><th class="c">Estado</th><th class="c">Acción</th></tr></thead><tbody>${rec.map(r => `<tr><td><b class="mono">${esc(r.codigo)}</b></td><td>${esc(r.nombres)}</td><td>${esc(r.tipo)}</td><td>${fshort(r.fecha)}</td><td>${lrSem(r)}</td><td class="c">${stBadge(r.estado)}</td><td class="c"><a class="icon-btn" href="#/admin/reclamos/${r.id}" title="Ver" aria-label="Ver ${esc(r.codigo)}">${ic('eye')}</a></td></tr>`).join('') || '<tr><td colspan="7"><div class="empty">Sin registros.</div></td></tr>'}</tbody></table></div></div>
      <div style="display:grid;gap:16px;align-content:start"><div class="panel"><h2><span>${sic('zap')} Acciones rápidas</span></h2><div class="pb pz-quick"><button class="btn" data-qk="Reclamo">${sic('file')} Gestionar reclamos</button><button class="btn pz-orange" data-qk="Queja">${sic('alert')} Gestionar quejas</button><button class="btn ghost" data-rep>${sic('chart')} Ver reportes</button><a class="btn ghost" href="#/servicios/libro-de-reclamaciones" target="_blank">${sic('globe')} Ver libro público</a></div></div>
-      <div class="panel"><h2><span>${sic('user')} Responsable institucional</span></h2><div class="pb"><b>${esc(c.responsable)}</b><br>${esc(c.cargo)}<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a><p class="note" style="margin-top:8px">Plazos: reclamos ${c.plazoReclamo} y quejas ${c.plazoQueja} días hábiles.</p></div></div>
+      <div class="panel"><h2><span>${sic('user')} Responsable institucional</span></h2><div class="pb"><b>${esc(c.responsable || 'Responsable pendiente de asignación')}</b><br>${esc(c.cargo)}<br><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a><p class="note" style="margin-top:8px">Plazos: reclamos ${c.plazoReclamo} y quejas ${c.plazoQueja} días hábiles.</p></div></div>
       <div class="panel"><h2><span>${sic('alert')} Información</span></h2><div class="pb note">${esc(c.flujo)}</div></div></div></div>`;
   return { html, after: () => {
     $$('[data-qk]').forEach(b => b.onclick = () => { const st = ADM.state.reclamos = ADM.state.reclamos || { q: '', f: {}, page: 1, size: 10, trash: false }; st.f = Object.assign({}, st.f, { tipo: b.dataset.qk }); st.page = 1; go('#/admin/reclamos/bandeja'); });
@@ -7544,7 +7561,7 @@ function bolsaPanel() {
   const emps = D.empresas.slice().sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 4);
   const posts = D.postulaciones.slice().sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))).slice(0, 5);
   const html = bHead(`Gestión de la Bolsa Laboral del ${inst().nombre}`) + bTabs('p')
-    + `<div class="pz-welcome"><div><h2>Bienvenido al panel de la Bolsa Laboral</h2><p>Conecta a estudiantes y egresados con empresas validadas por la ${esc(window.pzBolsaCfg().responsable)}.</p></div><a class="btn gold" href="#/admin/ix-bolsa/gestion">${sic('plus')} Nueva convocatoria</a></div>
+    + `<div class="pz-welcome"><div><h2>Bienvenido al panel de la Bolsa Laboral</h2><p>Conecta a estudiantes y egresados con empresas validadas por ${esc(window.pzBolsaCfg().responsable || 'el instituto')}.</p></div><a class="btn gold" href="#/admin/ix-bolsa/gestion">${sic('plus')} Nueva convocatoria</a></div>
     <div class="pz-kpis">${K('users', 'var(--sky);color:var(--link)', est, 'Estudiantes', can('ix-alumnos') ? '#/admin/ix-alumnos' : '#/admin/ix-bolsa/padron', 'Regulares en el maestro')}${K('grad', 'var(--sky);color:var(--link)', egr, 'Egresados', '#/admin/ix-bolsa/egresados', 'Egresados y titulados')}${K('building', 'var(--sky);color:var(--link)', empA, 'Empresas', '#/admin/ix-bolsa/empresas', 'Aprobadas')}${K('briefcase', 'var(--sky);color:var(--link)', conv, 'Convocatorias', '#/admin/ix-bolsa/gestion', 'Vigentes')}
       ${K('file', 'var(--sky);color:var(--link)', post, 'Postulaciones', '#/admin/ix-bolsa/gestion')}${K('clock', 'var(--sky);color:var(--link)', rev, 'En revisión', '#/admin/ix-bolsa/gestion')}${K('check', 'var(--sky);color:var(--link)', sel, 'Seleccionados', '#/admin/ix-bolsa/gestion')}${K('alert', 'var(--sky);color:var(--link)', empP, 'Empresas pendientes', '#/admin/ix-bolsa/empresas', 'Por validar')}</div>
     <div class="pz-dash"><div class="panel"><h2><span>Convocatorias recientes</span><a class="btn xs ghost" href="#/admin/ix-bolsa/gestion">Ver todas</a></h2><div class="tbl-wrap" style="border:0"><table class="tbl light"><thead><tr><th>Convocatoria</th><th>Empresa</th><th>Modalidad</th><th class="c">Estado</th><th class="num">Postulaciones</th></tr></thead><tbody>${ofs.map(o => `<tr><td><b>${esc(o.puesto)}</b><br><small style="color:var(--muted)">Publicado ${fdx(o.fecha)}</small></td><td>${esc(xemp(o.emp).nom)}</td><td>${esc(o.modal)}</td><td class="c">${stBadge(o.estado === 'Publicada' && o.limite < hoy ? 'Cerrada' : o.estado)}</td><td class="num">${D.postulaciones.filter(p => p.of === o.id).length}</td></tr>`).join('') || '<tr><td colspan="5"><div class="empty">Sin convocatorias.</div></td></tr>'}</tbody></table></div></div>
@@ -8033,7 +8050,7 @@ R('servicios', path => {
   const r = recepcionDe(new Date().toISOString());
   const cards = [
     ['mpv', [['clock', `${esc(c.dias)}, ${fmt12(c.horaIni)} – ${fmt12(c.horaFin)}`], [r.enHorario ? 'check' : 'alert', r.enHorario ? 'En horario de atención ahora' : 'Fuera de horario: se recibe el siguiente día hábil']], [['Presentar documento', '#/servicios/mesa-de-partes'], ['Consultar expediente', '#/servicios/mesa-de-partes?tab=consulta']]],
-    ['lr', [['clock', `Reclamos: ${l.plazoReclamo} días hábiles · Quejas: ${l.plazoQueja}`], ['user', esc(l.responsable)]], [['Registrar reclamo o queja', '#/servicios/libro-de-reclamaciones'], ['Consultar reclamo', '#/servicios/libro-de-reclamaciones?tab=consulta']]],
+    ['lr', [['clock', `Reclamos: ${l.plazoReclamo} días hábiles · Quejas: ${l.plazoQueja}`], ['user', esc(l.responsable || 'Responsable pendiente de asignación')]], [['Registrar reclamo o queja', '#/servicios/libro-de-reclamaciones'], ['Consultar reclamo', '#/servicios/libro-de-reclamaciones?tab=consulta']]],
     ['cert', [['zap', 'Resultado inmediato, también con el código QR'], ['file', 'Títulos, certificados y constancias']], [['Verificar documento', '#/servicios/consulta-certificados']]],
     ['bolsa', [['briefcase', `${nOf} oferta(s) vigente(s)`], ['building', 'Registro de empresas libre y gratuito']], [['Ver ofertas', '#/servicios/bolsa-laboral'], ['Registrar empresa', '#/servicios/bolsa-laboral?tab=empresas']]],
   ];
@@ -8160,16 +8177,16 @@ R('servicios/bolsa-laboral', (path, q) => {
     <div class="pz-of-cta">${sic('lock', 20)}<div><b>Para postular no necesitas otra cuenta.</b><span>Presiona «Postular» e ingresa a la intranet con tu DNI y la contraseña que te entregó Secretaría Académica. Tu perfil y tu CV se gestionan allí.</span></div></div>
    </div>
    <div data-pane="e" ${tab0 === 'e' ? '' : 'hidden'}>
-    <div class="pz-bl-e2"><section class="pz-bl-reg"><div class="pz-bl-e2h">${sic('plus', 20)}<div><b>Registra tu empresa</b><span>Libre y gratuito. ${esc(cfg.responsable)} valida los datos antes de que publiques ofertas.</span></div></div><div class="pz-bl-ix">${ixWrap(IX.view('pub:bolsa'))}</div></section>
+    <div class="pz-bl-e2"><section class="pz-bl-reg"><div class="pz-bl-e2h">${sic('plus', 20)}<div><b>Registra tu empresa</b><span>Libre y gratuito. ${esc(cfg.responsable || 'Responsable pendiente de asignación')} valida los datos antes de que publiques ofertas.</span></div></div><div class="pz-bl-ix">${ixWrap(IX.view('pub:bolsa'))}</div></section>
      <aside class="pz-bl-side"><section><h3>${sic('key', 17)} ¿Tu empresa ya está registrada?</h3><p>Ingresa a la intranet con tu RUC y contraseña para publicar convocatorias y revisar postulantes.</p><a class="btn" href="#/admin">Ingresar a la intranet</a></section>
       <section><h3>${sic('building', 17)} Empresas aliadas</h3>${emps.length ? `<ul class="pz-bl-al">${emps.map(e => `<li><span class="pz-of-av sm">${esc(svInitials(e.nom))}</span><span><b>${esc(e.nom)}</b><small>${esc(e.sector || '')}</small></span></li>`).join('')}</ul>` : '<p>Aún no hay empresas aliadas.</p>'}</section>
-      <section><h3>${sic('mail', 17)} Validación de empresas</h3><p><b>${esc(cfg.responsable)}</b><br><a href="mailto:${esc(cfg.correo)}">${esc(cfg.correo)}</a></p></section></aside></div>
+      <section><h3>${sic('mail', 17)} Validación de empresas</h3><p><b>${esc(cfg.responsable || 'Responsable pendiente de asignación')}</b><br><a href="mailto:${esc(cfg.correo)}">${esc(cfg.correo)}</a></p></section></aside></div>
    </div>
    <div data-pane="i" ${tab0 === 'i' ? '' : 'hidden'}>
     ${svSteps([['Busca la oferta', 'Filtra por programa de estudios o modalidad.'], ['Presiona «Postular»', 'El sistema te lleva al inicio de sesión de la intranet.'], ['Inicia sesión', 'Con tu DNI y contraseña de estudiante o egresado.'], ['Confirma', 'Tu postulación se envía con tu perfil y tu CV.']])}
     <section class="card cb pz-bl-faq"><h2>Preguntas frecuentes</h2><h3>¿Quién puede postular?</h3><p>Estudiantes y egresados de ${esc(inst().nombre)} con cuenta en la intranet. Si aún no tienes cuenta, solicítala en Secretaría Académica.</p><h3>¿Dónde subo mi CV?</h3><p>En la intranet, en Bolsa laboral › Mi perfil. Es obligatorio para postular.</p><h3>¿Cómo sé si me seleccionaron?</h3><p>En la intranet verás el estado de cada postulación (Recibida, En revisión, Seleccionado) y recibirás un aviso.</p><h3>Soy empresa, ¿cuánto cuesta?</h3><p>Nada. El registro y la publicación de ofertas son gratuitos.</p></section>
    </div>`;
-  const side = `<section class="side-box"><h2>Bolsa Laboral en cifras</h2><div class="pad pz-bl-kp"><div><b>${ofs.length}</b><span>ofertas vigentes</span></div><div><b>${vac}</b><span>vacantes</span></div><div><b>${emps.length}</b><span>empresas aliadas</span></div></div></section><section class="side-box"><h2>Responsable</h2><div class="pad" style="font-size:13.5px"><b>${esc(cfg.responsable)}</b><br><a href="mailto:${esc(cfg.correo)}">${esc(cfg.correo)}</a></div></section>`;
+  const side = `<section class="side-box"><h2>Bolsa Laboral en cifras</h2><div class="pad pz-bl-kp"><div><b>${ofs.length}</b><span>ofertas vigentes</span></div><div><b>${vac}</b><span>vacantes</span></div><div><b>${emps.length}</b><span>empresas aliadas</span></div></div></section><section class="side-box"><h2>Responsable</h2><div class="pad" style="font-size:13.5px"><b>${esc(cfg.responsable || 'Responsable pendiente de asignación')}</b><br><a href="mailto:${esc(cfg.correo)}">${esc(cfg.correo)}</a></div></section>`;
   const html = shell(path, { title: 'Bolsa Laboral', desc: `Bolsa Laboral del ${inst().nombre}: ofertas de empleo y prácticas para estudiantes y egresados, y registro libre de empresas.`, crumbs: [['Servicios', '#/servicios'], ['Bolsa Laboral']], banner: { kicker: 'Servicios en línea', title: 'Bolsa Laboral', text: 'Conectamos talento con empresas' }, side, body });
   return { html, after: () => {
     const showTab = k => { $$('.pz-mt [data-tab]').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === k)); $$('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== k); if (k === 'e') { const b = $('[data-tab="pubbolsa:empresa"]'); if (b && b.getAttribute('aria-selected') !== 'true') b.click(); } };

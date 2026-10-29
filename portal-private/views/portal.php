@@ -4726,6 +4726,9 @@ function P(name) {
 const isPub = x => x && (x._preview || ['Publicado', 'Publicada', 'Activo', 'Vigente'].includes(x.estado));
 const sortO = a => a.slice().sort((x, y) => (x.orden || 0) - (y.orden || 0));
 const page = clave => P('paginas').find(p => p.clave === clave);
+const fixedPage = p => Object.prototype.hasOwnProperty.call(PAGE_ROUTE, p.clave);
+const pageURL = p => fixedPage(p) ? PAGE_ROUTE[p.clave] : '#/paginas/' + encodeURIComponent(p.slug);
+const extraPages = () => sortO(P('paginas').filter(p => isPub(p) && !fixedPage(p)));
 const persona = id => P('personas').find(p => p.id === id);
 const fullName = p => p ? `${p.titulo ? p.titulo + ' ' : ''}${p.nombres} ${p.apellidos}` : '';
 const publicTeacherVisible = p => !p?.cv?.autoriza?.revocado && (p?.cv?.autoriza?.ok === true || /^https:\/\/(www\.)?iestpchincha\.edu\.pe\/nosotros\//.test(p?.fuente || ''));
@@ -4754,7 +4757,7 @@ function navModel() {
     { label: 'Admisión y Matrículas', base: 'admision|matricula|becas', items: [{ label: 'Admisión ' + (adm ? adm.anio : ''), href: '#/admision' }, { label: 'Matrícula ' + (mat ? mat.periodo : ''), href: '#/matricula' }, { label: 'Becas', href: '#/becas' }] },
     { label: 'Transparencia', base: 'transparencia', items: [['Documentos de Gestión', 'documentos-gestion'], ['Inversiones y Recursos Económicos', 'inversiones'], ['Licenciamiento', 'licenciamiento'], ['TUPA', 'tupa'], ['Estadísticas', 'estadisticas'], ['Convocatorias', 'convocatorias']].map(([label, s]) => ({ label, href: '#/transparencia/' + s })) },
     { label: 'Servicios', base: 'servicios', items: [{ label: 'Servicios en línea', href: '#/servicios' }, { label: 'Mesa de Partes Virtual', href: '#/servicios/mesa-de-partes' }, { label: 'Libro de Reclamaciones', href: '#/servicios/libro-de-reclamaciones' }, { label: 'Consulta de certificados', href: '#/servicios/consulta-certificados' }, { label: 'Bolsa Laboral', href: '#/servicios/bolsa-laboral' }, { label: 'Servicios Complementarios', href: '#/servicios/complementarios' }, e('biblioteca', 'Biblioteca Virtual'), e('correo', 'Correo Institucional'), e('aula', 'Aula Virtual')].filter(Boolean) },
-    { label: 'Otras Páginas', base: 'otras|eventos', items: ['avanza', 'conecta', 'registra', 'titula', 'dre'].map(id => { const x = coll('enlaces').find(l => l.id === id); return x && ext(id) ? { label: x.nombre, href: x.url, ext: true } : null; }).filter(Boolean).concat([{ label: 'Eventos', href: '#/eventos' }, { label: 'Preguntas Frecuentes', href: '#/preguntas-frecuentes' }]) },
+    { label: 'Otras Páginas', base: 'otras|eventos|paginas', items: ['avanza', 'conecta', 'registra', 'titula', 'dre'].map(id => { const x = coll('enlaces').find(l => l.id === id); return x && ext(id) ? { label: x.nombre, href: x.url, ext: true } : null; }).filter(Boolean).concat([{ label: 'Eventos', href: '#/eventos' }, { label: 'Preguntas Frecuentes', href: '#/preguntas-frecuentes' }], extraPages().map(p => ({ label: p.titulo, href: pageURL(p) }))) },
     { label: 'Noticias', base: 'noticias', href: '#/noticias' },
     { label: 'Contáctanos', base: 'contacto', href: '#/contacto' },
   ];
@@ -4892,6 +4895,12 @@ function richPage(path, clave, slug, crumb, extraBody = '', bannerText = 'Conoce
   const body = `<article><h1>${esc(p.titulo)}</h1>${p.imagen ? `<figure class="figure float-img"><img src="${img(p.imagen)}" alt="Imagen institucional: ${esc(p.titulo)}"><figcaption>${esc(inst().nombreCorto)}</figcaption></figure>` : ''}<div class="prose">${sanitize(p.contenido)}</div><div class="clear"></div>${p.mensaje ? `<blockquote class="quote">“${esc(p.mensaje)}”<br><small>— ${esc(inst().nombreCorto)}</small></blockquote>` : ''}${extraBody}<p style="font-size:12.5px;color:var(--muted);margin-top:18px">Última actualización: <time datetime="${esc(p.modEn)}">${fdate(p.modEn)}</time></p></article>`;
   return shell(path, { title: p.titulo, desc: clamp(stripTags(p.contenido), 155), crumbs: [['Nosotros', '#/nosotros/presentacion'], [p.titulo]], banner: { title: 'Nosotros', text: bannerText }, side: nosotrosSide(slug) + sidePromo('Formación técnica para un mejor futuro') + sideLinks(), body });
 }
+R('paginas/:slug', (path, q, params) => {
+  const p = extraPages().find(p => p.slug === params.slug);
+  if (!p) return notFound(path);
+  return shell(path, { title: p.titulo, desc: clamp(stripTags(p.contenido), 155), crumbs: [[p.titulo]], banner: { title: p.titulo }, side: null,
+    body: `<article><h1>${esc(p.titulo)}</h1>${p.imagen ? `<figure class="figure"><img src="${img(p.imagen)}" alt="${esc(p.titulo)}"></figure>` : ''}<div class="prose">${sanitize(p.contenido)}</div>${p.mensaje ? `<blockquote class="quote">${esc(p.mensaje)}</blockquote>` : ''}</article>` });
+});
 R('nosotros', p => richPage(p, 'presentacion', 'presentacion'));
 R('nosotros/presentacion', p => richPage(p, 'presentacion', 'presentacion'));
 R('nosotros/resena-historica', p => richPage(p, 'resena', 'resena-historica'));
@@ -5384,9 +5393,10 @@ R('mapa-del-sitio', path => {
   return { html: shell(path, { title: 'Mapa del sitio', crumbs: [['Mapa del sitio']], banner: { title: 'Mapa del sitio' }, side: null, body }), after: () => $('[data-sm]').onclick = downloadSitemap };
 });
 function downloadSitemap() {
-  const base = 'https://www.iestpchincha.edu.pe';
+  const base = location.origin + location.pathname + '#';
   const urls = ['/', '/programas', '/admision', '/matricula', '/becas', '/noticias', '/eventos', '/contacto', '/preguntas-frecuentes', '/mapa-del-sitio', '/servicios/mesa-de-partes', '/servicios/bolsa-laboral', '/servicios/consulta-certificados', '/servicios/complementarios'].concat(['presentacion', 'resena-historica', 'mision-vision', 'organizacion', 'reconocimientos', 'plana-jerarquica', 'plana-docente', 'campus-e-informes'].map(s => '/nosotros/' + s)).concat(['documentos-gestion', 'inversiones', 'libro-de-reclamaciones', 'licenciamiento', 'tupa', 'estadisticas', 'convocatorias'].map(s => '/transparencia/' + s)).concat(progs().map(p => '/programas/' + p.slug)).concat(pubNews().map(n => '/noticias/' + n.slug));
-  downloadText(`\x3c?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${base}${u}</loc></url>`).join('\n')}\n</urlset>`, 'sitemap.xml', 'application/xml');
+  urls.push(...extraPages().map(p => pageURL(p).slice(1)));
+  downloadText(`\x3c?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${esc(base + u)}</loc></url>`).join('\n')}\n</urlset>`, 'sitemap.xml', 'application/xml');
 }
 function searchPublicSite(query) {
   const normalized = normTitle(query).replace(/[^a-z0-9]+/g, ' ').trim();
@@ -5401,8 +5411,7 @@ function searchPublicSite(query) {
     const score = (titleText.trim() === normalized ? 100 : titleText.includes(normalized) ? 40 : 0) + words.filter(word => titleText.includes(word)).length;
     results.push({ t: title, u: url, k: kind, d: clamp(description, 160), score });
   };
-  const pageRoutes = { presentacion: '#/nosotros/presentacion', resena: '#/nosotros/resena-historica', mision: '#/nosotros/mision-vision', organizacion: '#/nosotros/organizacion', reconocimientos: '#/nosotros/reconocimientos', jerarquica: '#/nosotros/plana-jerarquica', docentes: '#/nosotros/plana-docente', campus: '#/nosotros/campus-e-informes', privacidad: '#/politica-de-privacidad', terminos: '#/terminos-de-uso', faq: '#/preguntas-frecuentes' };
-  P('paginas').filter(isPub).forEach(p => add(p.titulo, pageRoutes[p.clave], 'Página', stripTags(p.contenido)));
+  P('paginas').filter(isPub).forEach(p => add(p.titulo, pageURL(p), 'Página', stripTags(p.contenido)));
   progs().forEach(p => add(p.nombre, '#/programas/' + p.slug, 'Programa de estudio', p.resumen || '', [p.codigo, stripTags(p.perfil), p.campo, ...(p.modulos || []).flatMap(m => [m.nombre, ...(m.uds || []).map(u => u.nombre)])].join(' ')));
   pubNews().forEach(n => add(n.titulo, '#/noticias/' + n.slug, 'Noticia', n.resumen || '', stripTags(n.contenido)));
   P('documentos').filter(d => d.estado === 'Publicado').forEach(d => add(d.nombre, '#/transparencia/documentos-gestion', 'Documento de gestión', d.descripcion || '', d.vigencia));
@@ -6114,20 +6123,23 @@ SPECS.usuarios = {
    ========================================================= */
 const PAGE_ROUTE = { presentacion: '#/nosotros/presentacion', resena: '#/nosotros/resena-historica', mision: '#/nosotros/mision-vision', organizacion: '#/nosotros/organizacion', reconocimientos: '#/nosotros/reconocimientos', jerarquica: '#/nosotros/plana-jerarquica', docentes: '#/nosotros/plana-docente', campus: '#/nosotros/campus-e-informes', privacidad: '#/politica-de-privacidad', terminos: '#/terminos-de-uso', faq: '#/preguntas-frecuentes' };
 SPECS.paginas = {
-  key: 'paginas', mod: 'paginas', coll: 'paginas', title: 'Páginas institucionales', singular: 'página', icon: 'file', states: ['Borrador', 'Publicada'], pubState: 'Publicada', label: r => r.titulo, create: false, softDelete: false,
-  sub: 'Cada página es un registro único que forma parte de la estructura obligatoria del portal: no se puede duplicar ni eliminar.',
+  key: 'paginas', mod: 'paginas', coll: 'paginas', title: 'Páginas institucionales', singular: 'página', icon: 'file', states: ['Borrador', 'Publicada'], pubState: 'Publicada', label: r => r.titulo, softDelete: true,
+  sub: 'Las páginas nuevas publicadas aparecen en Otras Páginas, el buscador y el mapa del sitio. Las páginas institucionales originales conservan sus rutas y no se pueden eliminar.',
+  canDelete: r => !fixedPage(r),
+  inUse: r => fixedPage(r) ? 'La página forma parte de la estructura institucional.' : '',
   tabs: () => tabsBar([['pg', 'Páginas institucionales', '#/admin/paginas'], ['rc', 'Reconocimientos', '#/admin/reconocimientos']], 'pg'),
-  cols: [{ l: 'Página', f: r => `<b>${esc(r.titulo)}</b>` }, { l: 'URL', f: r => `<code>/${esc(r.slug)}</code>` }, { l: 'Versiones', cls: 'num', f: r => (r.versiones || []).length }, { l: 'Última modificación', f: r => `${fshort(r.modEn, true)}<br><small>${esc(r.modPor)}</small>` }, { l: 'Estado', f: r => stBadge(r.estado) }],
+  cols: [{ l: 'Página', f: r => `<b>${esc(r.titulo)}</b>` }, { l: 'URL', f: r => `<a href="${esc(pageURL(r))}" target="_blank" rel="noopener"><code>${esc(pageURL(r))}</code></a>` }, { l: 'Versiones', cls: 'num', f: r => (r.versiones || []).length }, { l: 'Última modificación', f: r => `${fshort(r.modEn, true)}<br><small>${esc(r.modPor)}</small>` }, { l: 'Estado', f: r => stBadge(r.estado) }],
   sort: (a, b) => Object.keys(PAGE_ROUTE).indexOf(a.clave) - Object.keys(PAGE_ROUTE).indexOf(b.clave),
-  preview: r => PAGE_ROUTE[r.clave] || '#/',
+  preview: pageURL,
+  defaults: () => ({ contenido: '', mensaje: '', imagen: '', slug: '', versiones: [] }),
   fields: w => [
     { n: 'titulo', l: 'Título de la página', req: true, full: true },
     ['jerarquica', 'docentes', 'campus'].includes(w.clave) ? { n: 'contenido', l: 'Descripción introductoria', t: 'textarea', req: true, full: true, max: 400 } : { n: 'contenido', l: 'Contenido', t: 'rich', pubReq: true },
     { n: 'imagen', l: 'Imagen principal', t: 'image', full: true },
     { n: 'mensaje', l: w.clave === 'jerarquica' ? 'Mensaje de la Dirección General' : 'Mensaje institucional destacado (opcional)', t: 'textarea', full: true, max: 600 },
-    { n: 'slug', l: 'URL amigable (slug)', req: true, unique: true, side: true },
+    { n: 'slug', l: 'URL amigable (slug)', req: true, unique: true, side: true, max: 120, ro: fixedPage, hint: fixedPage(w) ? 'La ruta institucional se conserva para mantener sus enlaces.' : 'Se genera a partir del título. Dirección pública: #/paginas/slug.' },
   ],
-  beforeSave: w => { w.slug = slugify(w.slug); if (/^<|>$/.test(w.contenido || '') === false && ['jerarquica', 'docentes', 'campus'].includes(w.clave)) w.contenido = String(w.contenido || '').replace(/<[^>]+>/g, ''); },
+  beforeSave: w => { if (!fixedPage(w)) { w.slug = slugify(w.slug || w.titulo); w.clave = w.clave || 'custom-' + w.id; } if (/^<|>$/.test(w.contenido || '') === false && ['jerarquica', 'docentes', 'campus'].includes(w.clave)) w.contenido = String(w.contenido || '').replace(/<[^>]+>/g, ''); },
   afterSave: (w, isNew, prev) => { if (prev) { const snap = { titulo: prev.titulo, contenido: prev.contenido, imagen: prev.imagen, mensaje: prev.mensaje, estado: prev.estado, fecha: prev.modEn, por: prev.modPor }; w.versiones = [snap].concat(prev.versiones || []).slice(0, 10); } },
   sideExtra: w => (w.versiones || []).length ? `<hr style="border:0;border-top:1px solid var(--line);width:100%"><b>Versiones anteriores</b>${w.versiones.map((v, i) => `<span style="display:flex;justify-content:space-between;gap:6px;align-items:center">${fshort(v.fecha, true)} · ${esc(v.por)} <button type="button" class="btn xs ghost" data-restv="${i}">Restaurar</button></span>`).join('')}` : '',
   afterForm: (w, isNew, rer) => { $$('[data-restv]').forEach(b => b.onclick = async () => { const v = w.versiones[+b.dataset.restv]; if (!await confirmBox(`¿Cargar la versión del ${fshort(v.fecha, true)} en el editor? Deberá guardar para aplicarla.`, { ok: 'Cargar versión', danger: false })) return; Object.assign(w, { titulo: v.titulo, contenido: v.contenido, imagen: v.imagen, mensaje: v.mensaje }); route(); toast('Versión cargada en el editor. Revise y guarde.'); }); },

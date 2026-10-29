@@ -2,6 +2,7 @@
 declare(strict_types=1);
 final class PortalRules
 {
+    private const FIXED_PAGES = ['presentacion','resena','mision','organizacion','reconocimientos','jerarquica','docentes','campus','privacidad','terminos','faq'];
     public static function normal(string $value): string
     {$value=strtr($value,['Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N','á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n','ü'=>'u']);return strtolower(trim(preg_replace('/\s+/u',' ',$value)));}
     public static function safeLink(mixed $value,bool $internal=true): bool
@@ -81,7 +82,20 @@ final class PortalRules
             if(!preg_match('/^[0-9]{8}$/',(string)($r['dni']??'')))throw new PortalError(422,'El DNI del certificado debe tener ocho dígitos.');
             if(!self::date($r['fecha']??null))throw new PortalError(422,'La fecha del certificado no es válida.');
         }
-        foreach($new['paginas'] as &$r){$prior=PortalPolicy::find($old['paginas'],'id',$r['id']);if(!$prior){$r['versiones']=[];continue;}if(!self::changed($old['paginas'],$r))continue;
+        foreach($old['paginas'] as $prior)if(in_array($prior['clave']??'',self::FIXED_PAGES,true)){
+            $next=PortalPolicy::find($new['paginas'],'id',$prior['id']);
+            if(!$next||($next['deleted']??false)||($next['clave']??'')!==$prior['clave']||($next['slug']??'')!==$prior['slug'])throw new PortalError(422,'No se puede eliminar ni cambiar la ruta de una página institucional.');
+        }
+        foreach($new['paginas'] as &$r){$prior=PortalPolicy::find($old['paginas'],'id',$r['id']);
+            if(!$prior){
+                if(in_array($r['clave']??'',self::FIXED_PAGES,true)){
+                    if($r['id']!=='pg-'.$r['clave']||PortalPolicy::find($old['paginas'],'clave',$r['clave']))throw new PortalError(422,'La clave de página está reservada para la estructura institucional.');
+                }else $r['clave']='custom-'.$r['id'];
+            }
+            elseif(($r['clave']??'')!==($prior['clave']??''))throw new PortalError(422,'No se puede cambiar la identidad de una página.');
+            if(!($r['deleted']??false)&&self::changed($old['paginas'],$r)&&(!is_string($r['slug']??null)||strlen($r['slug'])>120||!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D',$r['slug'])))throw new PortalError(422,'La URL de la página debe usar letras minúsculas, números y guiones (máximo 120 caracteres).');
+            if(!($r['deleted']??false)&&self::changed($old['paginas'],$r)&&($r['estado']??'')==='Publicada'&&trim(strip_tags((string)($r['contenido']??'')))===''&&!preg_match('/<img\b/i',(string)($r['contenido']??'')))throw new PortalError(422,'Completa el contenido antes de publicar la página.');
+            if(!$prior){$r['versiones']=[];continue;}if(!self::changed($old['paginas'],$r))continue;
             $fields=['titulo','contenido','imagen','mensaje','estado'];$edited=false;foreach($fields as $field)if(!PortalPolicy::equal($r[$field]??null,$prior[$field]??null))$edited=true;
             $r['versiones']=$prior['versiones']??[];if($edited)$r['versiones']=array_slice([[...array_intersect_key($prior,array_flip($fields)),'fecha'=>$prior['modEn']??date(DATE_ATOM),'por'=>$prior['modPor']??$user['usuario']],...$r['versiones']],0,10);
         }unset($r);

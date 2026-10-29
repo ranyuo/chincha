@@ -37,6 +37,8 @@ Usa exclusivamente una base desechable cuyo nombre termine en `_test` y una conf
 node tests/demo-content.cjs
 node tests/browser-search.cjs
 node tests/browser-carousel.cjs
+node tests/browser-pages.cjs
+php tests/pages-publication.php
 php tests/demo-validation.php
 PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/run.php
 PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/parity.php

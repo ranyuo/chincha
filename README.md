@@ -38,6 +38,9 @@ node tests/demo-content.cjs
 node tests/browser-search.cjs
 node tests/browser-carousel.cjs
 node tests/browser-pages.cjs
+node tests/browser-community-regressions.cjs
+node tests/browser-scoped-job-flow.cjs
+node tests/academic-identifiers.cjs
 php tests/pages-publication.php
 php tests/demo-validation.php
 PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/run.php

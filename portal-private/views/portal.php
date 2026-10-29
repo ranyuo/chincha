@@ -2216,7 +2216,13 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const strip = s => String(s ?? "").replace(/<[^>]+>/g," ").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g," ").trim();
 const byId = (arr,id) => arr.find(x => x.id == id) || null;
-const nextId = arr => arr.reduce((m,x) => Math.max(m, x.id||0), 0) + 1;
+// Cada perfil recibe solo sus registros: su máximo local no es un contador global.
+const nextId = arr => {
+  let id;
+  do { const words = crypto.getRandomValues(new Uint32Array(2)); id = (words[0] & 0xfffff) * 0x100000000 + words[1]; }
+  while (!id || arr.some(row => row.id === id));
+  return id;
+};
 const prog = id => byId(DB.programas,id) || {cod:"—",nombre:"—"};
 const ud = id => byId(DB.uds,id) || {nombre:"—",cod:"—"};
 const docente = id => byId(DB.docentes,id);
@@ -3067,20 +3073,29 @@ function sesForm(s, pre){
   // Validación en vivo: refresca advertencias al cambiar campos
   $("#mform").addEventListener("change", () => { confirmed = false; const b = $("#mform button[type=submit]"); if(b) b.textContent = s ? "Guardar cambios" : "Agregar al horario"; $("#sesWarn").innerHTML = "" });
 }
+function horarioGrids(ss, opt = {}){
+  return ["Mañana", "Tarde"].filter(t => ss.some(s => s.turno === t)).map(t => `<h3>Turno ${t}</h3>${grid(ss.filter(s => s.turno === t), t, opt)}`).join("") || empty("No tiene clases programadas en este periodo.");
+}
+function horarioRows(ss, turno, byDoc){
+  const days = DIAS.slice(0,5), shifts = turno === "Todos" ? ["Mañana", "Tarde"].filter(t => ss.some(s => s.turno === t)) : [turno];
+  const rows = shifts.flatMap(t => [
+    ...(turno === "Todos" ? [[`Turno ${t}`, ...days.map(() => "")]] : []),
+    ...SLOTS[t].map(x => { if(x[0] === "REC") return [`${x[1]}-${x[2]}`, ...days.map(() => "Receso")];
+      return [`${x[0]}-${x[1]}`, ...days.map(d => { const s = ss.find(z => z.turno === t && z.dia === d && mins(z.ini) < mins(x[1]) && mins(x[0]) < mins(z.fin)); if(!s) return ""; const dd = docente(s.doc), a = amb(s.amb); return `${ud(s.ud).nombre}\n${byDoc ? prog(s.prog).cod + " " + s.ciclo + "-" + s.sec : (dd ? shortName(dd.nom) : "Sin docente")}\n${a ? a.cod : ""}`; })];
+    })
+  ]);
+  return {days, rows};
+}
 function horarioPDF(title, ss, turno, byDoc){
   if(!libsOk("pdf")) return;
-  const doc = pdfNew("landscape"); const y = pdfHeader(doc, title, `Periodo académico ${DB.cfg.periodo} · Turno ${turno}`);
-  const days = DIAS.slice(0,5);
-  const rows = SLOTS[turno].map(x => { if(x[0] === "REC") return [`${x[1]}-${x[2]}`, ...days.map(() => "Receso")];
-    return [`${x[0]}-${x[1]}`, ...days.map(d => { const s = ss.find(z => z.dia === d && mins(z.ini) < mins(x[1]) && mins(x[0]) < mins(z.fin)); if(!s) return ""; const dd = docente(s.doc), a = amb(s.amb); return `${ud(s.ud).nombre}\n${byDoc ? prog(s.prog).cod + " " + s.ciclo + "-" + s.sec : (dd ? shortName(dd.nom) : "Sin docente")}\n${a ? a.cod : ""}` })] });
+  const doc = pdfNew("landscape"); const y = pdfHeader(doc, title, `Periodo académico ${DB.cfg.periodo} · ${turno === "Todos" ? "Todos los turnos" : "Turno " + turno}`);
+  const {days, rows} = horarioRows(ss, turno, byDoc);
   pdfTable(doc, y, ["Hora", ...days.map(d => DIAS_L[d])], rows, {styles:{fontSize:7.5, cellPadding:2, valign:"middle", minCellHeight:13}, columnStyles:{0:{cellWidth:24, fontStyle:"bold"}}, didParseCell:c => { if(c.section === "body" && c.cell.raw === "Receso") c.cell.styles.fillColor = [236,240,239]; else if(c.section === "body" && c.column.index > 0 && c.cell.raw) c.cell.styles.fillColor = [219,235,232] }});
   pdfFooter(doc); log("Exportar","Horarios",title + " (PDF)"); if(!save())return false;
   saveFile(`horario_${slug(title)}_${fileStamp()}.pdf`, doc.output("blob"));
 }
 function horarioXLS(title, ss, turno, byDoc){
-  const days = DIAS.slice(0,5);
-  const rows = SLOTS[turno].map(x => { if(x[0] === "REC") return [`${x[1]}-${x[2]}`, ...days.map(() => "Receso")];
-    return [`${x[0]}-${x[1]}`, ...days.map(d => { const s = ss.find(z => z.dia === d && mins(z.ini) < mins(x[1]) && mins(x[0]) < mins(z.fin)); if(!s) return ""; const dd = docente(s.doc), a = amb(s.amb); return `${ud(s.ud).nombre} | ${byDoc ? prog(s.prog).cod + " " + s.ciclo + "-" + s.sec : (dd ? dd.nom : "Sin docente")} | ${a ? a.cod : ""}` })] });
+  const {days, rows} = horarioRows(ss, turno, byDoc);
   exportXLSX(`horario_${slug(title)}_${fileStamp()}.xlsx`, ["Hora", ...days.map(d => DIAS_L[d])], rows, "Horario");
 }
 V.horarios = () => {
@@ -3115,13 +3130,13 @@ V.horarios = () => {
       const ss = d ? DB.sesiones.filter(s => s.doc === d.id && s.per === DB.cfg.periodo) : [];
       const h = ss.reduce((a,s) => a + (mins(s.fin)-mins(s.ini))/60, 0);
       body = `<section class="panel"><div class="f"><div class="fld"><label for="hdoc">Docente</label><select id="hdoc" data-chg="hdoc">${DB.docentes.map(x => `<option value="${x.id}" ${x.id === dId ? "selected" : ""}>${esc(x.nom)}</option>`).join("")}</select></div></div>
-        ${d ? `<div class="panel-h"><div><h2>${esc(d.nom)}</h2><span class="note">${ss.length} sesiones · ${Math.round(h*10)/10} h semanales · Disponible ${d.dias.join(", ")} ${d.desde}–${d.hasta}</span></div><div class="btnrow"><button class="btn sec sm" data-act="hdPDF">PDF</button><button class="btn sec sm" data-act="hdXLS">Excel</button></div></div>${grid(ss.filter(s => s.turno === "Mañana"), "Mañana", {byDoc:true, showErr:true})}${ss.some(s => s.turno === "Tarde") ? grid(ss.filter(s => s.turno === "Tarde"), "Tarde", {byDoc:true, showErr:true}) : ""}` : empty("No hay docentes registrados.")}</section>`;
+        ${d ? `<div class="panel-h"><div><h2>${esc(d.nom)}</h2><span class="note">${ss.length} sesiones · ${Math.round(h*10)/10} h semanales · Disponible ${d.dias.join(", ")} ${d.desde}–${d.hasta}</span></div><div class="btnrow"><button class="btn sec sm" data-act="hdPDF">PDF</button><button class="btn sec sm" data-act="hdXLS">Excel</button></div></div>${horarioGrids(ss, {byDoc:true, showErr:true})}` : empty("No hay docentes registrados.")}</section>`;
     }
     if(T.cur === "ambiente"){
       const aId = S.ui.hamb || (DB.ambientes[0] || {}).id; const a = amb(aId);
       const ss = a ? DB.sesiones.filter(s => s.amb === a.id && s.per === DB.cfg.periodo) : [];
       body = `<section class="panel"><div class="f"><div class="fld"><label for="hamb">Ambiente</label><select id="hamb" data-chg="hamb">${DB.ambientes.map(x => `<option value="${x.id}" ${x.id === aId ? "selected" : ""}>${x.cod} · ${x.tipo}</option>`).join("")}</select></div></div>
-        ${a ? `<div class="panel-h"><div><h2>${esc(a.cod)} · ${esc(a.tipo)}</h2><span class="note">${esc(a.ubic)} · Capacidad ${a.cap} · ${ss.length} sesiones</span></div></div>${grid(ss.filter(s => s.turno === "Mañana"), "Mañana", {byDoc:true, showErr:true})}` : empty("No hay ambientes registrados.")}</section>`;
+        ${a ? `<div class="panel-h"><div><h2>${esc(a.cod)} · ${esc(a.tipo)}</h2><span class="note">${esc(a.ubic)} · Capacidad ${a.cap} · ${ss.length} sesiones</span></div></div>${horarioGrids(ss, {byDoc:true, showErr:true})}` : empty("No hay ambientes registrados.")}</section>`;
     }
     if(T.cur === "config"){
       const sub = S.tab.hconf || "programas";
@@ -3133,7 +3148,7 @@ V.horarios = () => {
     const d = myDoc(); if(!d) return intro + empty("Cuenta sin docente vinculado.");
     const ss = DB.sesiones.filter(s => s.doc === d.id && s.per === DB.cfg.periodo);
     const T = tabs("horarios", [["mio","Mi horario"],["uds","Mis unidades"]]);
-    if(T.cur === "mio") return intro + T.html + `<section class="panel"><div class="panel-h"><div><h2>Horario docente · ${esc(d.nom)}</h2><span class="note">Periodo ${DB.cfg.periodo}</span></div><div class="btnrow"><button class="btn sec sm" data-act="hdPDF">PDF</button><button class="btn sec sm" data-act="hdXLS">Excel</button></div></div>${grid(ss.filter(s => s.turno === "Mañana"), "Mañana", {byDoc:true})}</section>`;
+    if(T.cur === "mio") return intro + T.html + `<section class="panel"><div class="panel-h"><div><h2>Horario docente · ${esc(d.nom)}</h2><span class="note">Periodo ${DB.cfg.periodo}</span></div><div class="btnrow"><button class="btn sec sm" data-act="hdPDF">PDF</button><button class="btn sec sm" data-act="hdXLS">Excel</button></div></div>${horarioGrids(ss, {byDoc:true})}</section>`;
     return intro + T.html + `<section class="panel"><h2>Unidades asignadas</h2><div class="tw"><table><thead><tr><th>Unidad didáctica</th><th>Programa</th><th>Ciclo-Secc.</th><th>Día y hora</th><th>Ambiente</th><th>Publicación</th></tr></thead><tbody>${ss.map(s => `<tr><td>${esc(ud(s.ud).nombre)}</td><td>${prog(s.prog).cod}</td><td>${s.ciclo}-${s.sec}</td><td>${DIAS_L[s.dia]} ${mono(s.ini + "–" + s.fin)}</td><td>${esc((amb(s.amb)||{cod:"—"}).cod)}</td><td>${DB.publicados[gkey(s.prog,s.ciclo,s.sec,s.turno)] ? pill("Publicado","p-ok") : pill("Borrador","p-warn")}</td></tr>`).join("") || `<tr><td colspan="6">${empty("No tiene unidades asignadas en este periodo.")}</td></tr>`}</tbody></table></div></section>`;
   }
   const e = myEst(); if(!e) return intro + empty("Cuenta sin estudiante vinculado.");
@@ -3903,8 +3918,8 @@ const ACTIONS = {
   unpublish(){ const g = grupoSel(); delete DB.publicados[gkey(g.p,g.c,g.s,g.t)]; log("Retirar publicación","Horarios",`${prog(g.p).cod} ${g.c}-${g.s} ${g.t}`); if(!save())return false; toast("Publicación retirada. El horario volvió a borrador."); render() },
   hPDF(){ const g = grupoSel(); horarioPDF(`${prog(g.p).cod} ciclo ${g.c} sección ${g.s}`, sesGrupo(g), g.t) },
   hXLS(){ const g = grupoSel(); horarioXLS(`${prog(g.p).cod} ciclo ${g.c} sección ${g.s}`, sesGrupo(g), g.t) },
-  hdPDF(){ const d = myDoc() || docente(S.ui.hdoc || DB.docentes[0].id); horarioPDF(`Docente ${d.nom}`, DB.sesiones.filter(s => s.doc === d.id && s.per === DB.cfg.periodo && s.turno === "Mañana"), "Mañana", true) },
-  hdXLS(){ const d = myDoc() || docente(S.ui.hdoc || DB.docentes[0].id); horarioXLS(`Docente ${d.nom}`, DB.sesiones.filter(s => s.doc === d.id && s.per === DB.cfg.periodo && s.turno === "Mañana"), "Mañana", true) },
+  hdPDF(){ const d = myDoc() || docente(S.ui.hdoc || DB.docentes[0].id); horarioPDF(`Docente ${d.nom}`, DB.sesiones.filter(s => s.doc === d.id && s.per === DB.cfg.periodo), "Todos", true) },
+  hdXLS(){ const d = myDoc() || docente(S.ui.hdoc || DB.docentes[0].id); horarioXLS(`Docente ${d.nom}`, DB.sesiones.filter(s => s.doc === d.id && s.per === DB.cfg.periodo), "Todos", true) },
   hePDF(){ const e = myEst(); horarioPDF(`${prog(e.prog).cod} ciclo ${e.ciclo} sección ${e.sec}`, DB.sesiones.filter(s => s.per === DB.cfg.periodo && s.prog === e.prog && s.ciclo === e.ciclo && s.sec === e.sec && s.turno === e.turno), e.turno) },
   heXLS(){ const e = myEst(); horarioXLS(`${prog(e.prog).cod} ciclo ${e.ciclo} sección ${e.sec}`, DB.sesiones.filter(s => s.per === DB.cfg.periodo && s.prog === e.prog && s.ciclo === e.ciclo && s.sec === e.sec && s.turno === e.turno), e.turno) },
   valXLS(){ exportXLSX(`validacion_horarios_${fileStamp()}.xlsx`, ["Severidad","Tipo","Detalle"], validar().map(v => [v.t === "bad" ? "Error" : "Advertencia", v.tipo, v.msg]), "Validaciones") },
@@ -4144,7 +4159,7 @@ return {
   persist(){ return save() },
   notifyTo(to, txt, go){ notify(to, txt, go) },
   logAct(a, m, d){ log(a, m, d) },
-  nextIdOf(col){ return Math.max(0, ...DB[col].map(x => +x.id || 0)) + 1 },
+  nextIdOf(col){ return nextId(DB[col]) },
   vinOpts(){ return vinOpts() },
   findEst(k){ k = String(k || "").trim(); const e = k && DB.estudiantes.find(x => x.dni === k); return e ? {id:e.id, dni:e.dni, nom:e.nom, estado:e.estado} : null },
   estById(id){ const e = byId(DB.estudiantes, +id); return e ? {id:e.id, dni:e.dni, nom:e.nom, estado:e.estado} : null },
@@ -8178,7 +8193,7 @@ function svPostular(id) {
 R('servicios/bolsa-laboral', (path, q) => {
   const ofs = svOfertas(); const D = IX && IX.db ? XD() : { empresas: [], programas: [] }; const cfg = window.pzBolsaCfg();
   const emps = D.empresas.filter(e => e.validada); const vac = ofs.reduce((a, o) => a + (+o.vac || 0), 0);
-  const tab0 = q && q.get && q.get('tab') === 'empresas' ? 'e' : q && q.get && q.get('tab') === 'como' ? 'i' : 'o';
+  const tab0 = q && q.get && (q.get('tab') === 'empresas' || q.get('registro') === '1') ? 'e' : q && q.get && q.get('tab') === 'como' ? 'i' : 'o';
   const progs = [...new Set(ofs.map(o => o.prog).filter(Boolean))].map(id => xprog(id));
   const body = `${svNav('bolsa-laboral')}${svHead('bolsa', [['briefcase', `<b>${ofs.length}</b> ofertas vigentes`], ['users', `<b>${vac}</b> vacantes`], ['building', `<b>${emps.length}</b> empresas aliadas`]])}
    ${svTabs([['o', 'briefcase', 'Ofertas laborales'], ['e', 'building', 'Para empresas'], ['i', 'book', '¿Cómo postular?']], tab0)}
@@ -8203,7 +8218,7 @@ R('servicios/bolsa-laboral', (path, q) => {
   const side = `<section class="side-box"><h2>Bolsa Laboral en cifras</h2><div class="pad pz-bl-kp"><div><b>${ofs.length}</b><span>ofertas vigentes</span></div><div><b>${vac}</b><span>vacantes</span></div><div><b>${emps.length}</b><span>empresas aliadas</span></div></div></section><section class="side-box"><h2>Responsable</h2><div class="pad" style="font-size:13.5px"><b>${esc(cfg.responsable || 'Responsable pendiente de asignación')}</b><br><a href="mailto:${esc(cfg.correo)}">${esc(cfg.correo)}</a></div></section>`;
   const html = shell(path, { title: 'Bolsa Laboral', desc: `Bolsa Laboral del ${inst().nombre}: ofertas de empleo y prácticas para estudiantes y egresados, y registro libre de empresas.`, crumbs: [['Servicios', '#/servicios'], ['Bolsa Laboral']], banner: { kicker: 'Servicios en línea', title: 'Bolsa Laboral', text: 'Conectamos talento con empresas' }, side, body });
   return { html, after: () => {
-    const showTab = k => { $$('.pz-mt [data-tab]').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === k)); $$('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== k); if (k === 'e') { const b = $('[data-tab="pubbolsa:empresa"]'); if (b && b.getAttribute('aria-selected') !== 'true') b.click(); } };
+    const showTab = k => { const params = new URLSearchParams(q); params.delete('registro'); if (k === 'o') params.delete('tab'); else params.set('tab', k === 'e' ? 'empresas' : 'como'); history.replaceState(null, '', '#/servicios/bolsa-laboral' + (params.toString() ? '?' + params.toString() : '')); $$('.pz-mt [data-tab]').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === k)); $$('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== k); if (k === 'e') { const b = $('[data-tab="pubbolsa:empresa"]'); if (b && b.getAttribute('aria-selected') !== 'true') b.click(); } };
     $$('.pz-mt [data-tab]').forEach(b => b.onclick = () => showTab(b.dataset.tab)); if (tab0 === 'e') showTab('e');
     $$('[data-post]').forEach(b => b.onclick = () => svPostular(b.dataset.post));
     const fq = $('[data-ofq]'), fp = $('[data-ofp]'), fm = $('[data-ofm]');

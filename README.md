@@ -39,6 +39,7 @@ node tests/browser-search.cjs
 node tests/browser-carousel.cjs
 node tests/browser-pages.cjs
 node tests/browser-community-regressions.cjs
+node tests/browser-registry-search.cjs
 node tests/browser-scoped-job-flow.cjs
 node tests/academic-identifiers.cjs
 php tests/pages-publication.php

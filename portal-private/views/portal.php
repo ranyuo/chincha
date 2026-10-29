@@ -6054,6 +6054,7 @@ function bindMalla(w, box, rer) {
 }
 SPECS.egresados = {
   key: 'egresados', mod: 'egresados', coll: 'egresados', title: 'Egresados', singular: 'egresado', icon: 'award', states: ESTADOS, label: r => r.nombres, scope: scopeProg,
+  search: ['nombres', 'anio'], searchPh: 'Nombres, apellidos o año',
   filters: [{ n: 'programaId', l: 'Programa', opts: progOpts }], sort: (a, b) => b.anio - a.anio, preview: r => '#/programas/' + ((byId('programas', r.programaId) || {}).slug || ''),
   cols: [{ l: 'Foto', f: r => `<img class="avatar" src="${img(r.foto)}" alt="">` }, { l: 'Nombres', f: r => `<b>${esc(r.nombres)}</b>` }, { l: 'Programa', f: r => esc((byId('programas', r.programaId) || {}).nombre || '') }, { l: 'Año', f: r => r.anio }, { l: 'Estado', f: r => stBadge(r.estado) }],
   defaults: () => ({ programaId: role().ownProgram ? currentUser().programaId : '', anio: yearNow() - 1 }),
@@ -6086,6 +6087,7 @@ SPECS.becas = {
 };
 SPECS.becasper = {
   key: 'becasper', mod: 'becas', coll: 'becasPeriodos', title: 'Periodos de becas', singular: 'periodo', icon: 'calendar', states: ['Borrador', 'Publicado', 'Cerrado'], label: r => `${r.anio} - ${r.periodo}`, tabs: () => becasTabs('p'), softDelete: false,
+  search: ['anio', 'periodo'], searchPh: 'Año o periodo',
   sort: (a, b) => b.anio - a.anio || b.periodo.localeCompare(a.periodo),
   cols: [{ l: 'Año', f: r => r.anio }, { l: 'Periodo', f: r => r.periodo }, { l: 'Beneficiarios', cls: 'num', f: r => alive('becarios').filter(b => b.periodoId === r.id).length }, { l: 'Vigente', f: r => r.vigente ? '<span class="badge ok">Vigente</span>' : '' }, { l: 'Estado', f: r => stBadge(r.estado) }],
   defaults: () => ({ anio: yearNow(), periodo: 'I', vigente: false }),

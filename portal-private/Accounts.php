@@ -91,9 +91,14 @@ trait PortalAccounts
     {
         if($authorize){$this->requireAdmin();$this->rate('accounts',120,60);}
         $data=$this->accountInput($input);
-        try{$this->db()->prepare('INSERT INTO pisco_users (username,name,email,password,role,profile) VALUES (?,?,?,?,?,?)')->execute([$data['username'],$data['name'],$data['email'],password_hash($data['password'],PASSWORD_DEFAULT),$data['role'],json_encode($data['profile'],JSON_THROW_ON_ERROR)]);}
+        try{$this->db()->prepare('INSERT INTO pisco_users (username,name,email,password,role,profile,active) VALUES (?,?,?,?,?,?,?)')->execute([$data['username'],$data['name'],$data['email'],password_hash($data['password'],PASSWORD_DEFAULT),$data['role'],json_encode($data['profile'],JSON_THROW_ON_ERROR),$this->accountActive($input)]);}
         catch(PDOException $e){if($e->getCode()==='23000')throw new PortalError(422,'El usuario o correo ya está registrado.');throw $e;}
         PortalAudit::write($this,'Crear cuenta','Cuentas',(string)$this->db()->lastInsertId(),['usuario'=>$data['username'],'rol'=>$data['role']]);
+    }
+    private function accountActive(array $input): int
+    {
+        $active=$input['active']??$input['estado']??'Activo';
+        return ($active===true||$active===1||$active==='Activo')?1:0;
     }
     public function accountOperation(array $input): array
     {
@@ -110,30 +115,46 @@ trait PortalAccounts
             $state=json_decode($this->state()['data'],true);$student=PortalPolicy::find($state['academico']['estudiantes']??[],'id',$input['student_id']??null);
             if(!$student)throw new PortalError(422,'Alumno no encontrado.');
             if($role==='coordinador'&&($student['prog']??null)!==($state['academico']['progMap'][$actor['programaId']]??null))throw new PortalError(403,'Alumno de otro programa.');
-            $password='DemoICA!'.bin2hex(random_bytes(8));
+            $password='Chincha-'.bin2hex(random_bytes(8)).'!';
             $fields=['username'=>(string)$student['dni'],'name'=>$student['nom'],'email'=>($student['correo']??'')?:$student['dni'].'@portal.invalid','password'=>$password,'role'=>in_array($student['estado'],['Egresado','Titulado'],true)?'egresado':'estudiante','vin'=>'est:'.$student['id'],'dni'=>(string)$student['dni']];
-            $this->createAccount($fields,false);return ['user'=>$this->accountDto($this->db()->query('SELECT * FROM pisco_users WHERE username = '.$this->db()->quote(strtolower($fields['username'])))->fetch()),'temporary_password'=>$password];
+            $this->createAccount($fields,false);$row=$this->db()->query('SELECT * FROM pisco_users WHERE username = '.$this->db()->quote(strtolower($fields['username'])))->fetch();
+            $this->flagPasswordChange((int)$row['id'],true);$row['profile']=json_encode([...(json_decode($row['profile']??'{}',true)??[]),'cambiarClave'=>true]);
+            return ['user'=>$this->accountDto($row),'temporary_password'=>$password];
         }
         if($role!=='admin')throw new PortalError(403,'Solo el administrador puede editar cuentas.');
         if($action==='create'){
-            $this->createAccount($fields,false);return ['user'=>$this->accountDto($this->db()->query('SELECT * FROM pisco_users WHERE username = '.$this->db()->quote(strtolower($fields['username'])))->fetch())];
+            $this->createAccount($fields,false);$row=$this->db()->query('SELECT * FROM pisco_users WHERE username = '.$this->db()->quote(strtolower($fields['username'])))->fetch();
+            // Quien recibe una contraseña elegida por el administrador debe cambiarla al ingresar.
+            $this->flagPasswordChange((int)$row['id'],true);$row['profile']=json_encode([...(json_decode($row['profile']??'{}',true)??[]),'cambiarClave'=>true]);return ['user'=>$this->accountDto($row)];
         }
         $id=filter_var($input['id']??null,FILTER_VALIDATE_INT);if(!$id)throw new PortalError(422,'Identificador de cuenta no válido.');
         $stmt=$this->db()->prepare('SELECT * FROM pisco_users WHERE id = ? FOR UPDATE');$stmt->execute([$id]);$old=$stmt->fetch();if(!$old)throw new PortalError(404,'Cuenta no encontrada.');
         if(isset($input['expected'])){$dto=$this->accountDto($old);$expected=['username'=>$dto['usuario'],'name'=>$dto['nombre'],'email'=>$dto['correo']??'','role'=>$dto['rol'],'estado'=>$dto['estado']];foreach(['vin','dni','personaId','programaId','area','cargo'] as $key)$expected[$key]=$dto[$key]??'';if(!PortalPolicy::equal($expected,$input['expected']))throw new PortalError(409,'Otra persona modificó esta cuenta. Recarga antes de continuar.');}
         if($action==='unlock'){PortalAudit::write($this,'Desbloquear cuenta','Cuentas',(string)$id);$this->db()->prepare('UPDATE pisco_users SET login_failures=0,locked_until=NULL WHERE id=?')->execute([$id]);return ['ok'=>true];}
         if($action!=='update')throw new PortalError(422,'Acción no válida.');
-        $data=$this->accountInput($fields,false);$active=($fields['active']??$fields['estado']??'Activo');$active=($active===true||$active===1||$active==='Activo')?1:0;
+        $data=$this->accountInput($fields,false);$active=$this->accountActive($fields);
         if($data['username']!==$old['username'])throw new PortalError(422,'El nombre de usuario existente no se puede cambiar.');
         if((int)$actor['server_id']===$id&&(!$active||$data['role']!=='admin'))throw new PortalError(422,'No puedes quitarte el acceso de administrador.');
         if($old['role']==='admin'&&(!$active||$data['role']!=='admin')&&(int)$this->db()->query("SELECT COUNT(*) FROM pisco_users WHERE role='admin' AND active=1")->fetchColumn()<=1)throw new PortalError(422,'Debe quedar al menos un administrador activo.');
+        // La cuenta administradora principal (la más antigua, creada al instalar) solo se modifica a sí misma.
+        $primary=(int)$this->db()->query("SELECT MIN(id) FROM pisco_users WHERE role='admin'")->fetchColumn();
+        if($id===$primary&&(int)$actor['server_id']!==$id&&(!$active||$data['role']!=='admin'||$data['password']!==''))throw new PortalError(403,'La cuenta administradora principal solo puede cambiar su estado, rol o contraseña desde su propia sesión.');
+        $oldProfile=json_decode($old['profile']??'{}',true)??[];if(!empty($oldProfile['cambiarClave']))$data['profile']['cambiarClave']=true;
         $revoke=($data['role']!==$old['role']||!$active||$data['password']!==''||!PortalPolicy::equal($data['profile'],json_decode($old['profile']??'{}',true)??[]));
         $hash=$data['password']!==''?password_hash($data['password'],PASSWORD_DEFAULT):$old['password'];
         try{$this->db()->prepare('UPDATE pisco_users SET name=?,email=?,password=?,role=?,profile=?,active=?,auth_version=auth_version+?,login_failures=0,locked_until=NULL WHERE id=?')->execute([$data['name'],$data['email'],$hash,$data['role'],json_encode($data['profile'],JSON_THROW_ON_ERROR),$active,(int)$revoke,$id]);}
         catch(PDOException $e){if($e->getCode()==='23000')throw new PortalError(422,'El correo ya está registrado.');throw $e;}
+        if($data['password']!==''&&(int)$actor['server_id']!==$id)$this->flagPasswordChange($id,true);
         PortalAudit::write($this,'Actualizar cuenta','Cuentas',(string)$id,['rol_anterior'=>$old['role'],'rol_actual'=>$data['role'],'activo'=>$active,'cambio_clave'=>$data['password']!==''?'sí':'no'],$actor);
         if((int)$actor['server_id']===$id&&$revoke)$_SESSION['auth_version']=(int)$old['auth_version']+1;
         return ['ok'=>true];
+    }
+    /** Marca (o desmarca) que la cuenta debe cambiar su contraseña temporal en el próximo ingreso. */
+    private function flagPasswordChange(int $id,bool $on): void
+    {
+        $stmt=$this->db()->prepare('SELECT profile FROM pisco_users WHERE id=?');$stmt->execute([$id]);$profile=json_decode((string)($stmt->fetchColumn()?:'{}'),true)??[];
+        if($on)$profile['cambiarClave']=true;else unset($profile['cambiarClave']);
+        $this->db()->prepare('UPDATE pisco_users SET profile=? WHERE id=?')->execute([json_encode($profile,JSON_THROW_ON_ERROR),$id]);
     }
     public function changePassword(array $input): void
     {
@@ -143,6 +164,7 @@ trait PortalAccounts
         $stmt=$this->db()->prepare('SELECT password,auth_version FROM pisco_users WHERE id=?');$stmt->execute([$user['server_id']]);$old=$stmt->fetch();
         if(!password_verify($data['current_password'],$old['password']))throw new PortalError(422,'La contraseña actual no es correcta.');
         $this->db()->prepare('UPDATE pisco_users SET password=?,auth_version=auth_version+1,login_failures=0,locked_until=NULL WHERE id=?')->execute([password_hash($data['password'],PASSWORD_DEFAULT),$user['server_id']]);
+        $this->flagPasswordChange((int)$user['server_id'],false);
         PortalAudit::write($this,'Cambiar contraseña','Cuentas',(string)$user['server_id'],[],$user);
         $_SESSION['auth_version']=(int)$old['auth_version']+1;session_regenerate_id(true);
     }

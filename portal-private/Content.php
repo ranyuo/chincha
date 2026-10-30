@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Correcciones conocidas de Chincha; conserva el resto del catálogo y los datos operativos. */
+/** Correcciones conocidas del catálogo TUPA; conserva el resto del catálogo y los datos operativos. */
 final class PortalContent
 {
     public static function forJson(array $payload): array

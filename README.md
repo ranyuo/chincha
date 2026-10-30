@@ -1,84 +1,48 @@
-# IESTP Chincha — Portal institucional
+# Portal IESTP Chincha
 
-Sistema PHP/MySQL adaptado con la información pública de **https://www.iestpchincha.edu.pe/**, consultada el **27 de octubre de 2026**. Conserva el diseño, las rutas, los módulos y las funciones del sistema original.
+Archivos para publicar en Hostinger:
 
-Incluye ocho programas con sus perfiles y mallas publicadas, plana docente y jerárquica, historia, dos sedes, noticias, becas, documentos de gestión y TUPA. Las imágenes y los documentos se sirven desde archivos locales; no se cargan desde el servidor del sitio de origen.
+- `portal-private/`: código PHP, vistas y datos. Va **fuera** de `public_html`, al mismo nivel.
+- `public_html/`: raíz pública del dominio, con la página, la intranet, el CSS, el JavaScript y las imágenes.
 
-[Mapeo, fuentes y datos pendientes](MAPEO-CHINCHA.md) · [Instalación y operación](INSTRUCCIONES.md) · [Descargar main](https://github.com/ranyuo/chincha/archive/refs/heads/main.zip)
+El archivo `portal-private/config.php` (datos de la base de datos y clave de instalación) **no se guarda en GitHub**. Se crea a partir de `portal-private/config.example.php`.
+
+Requiere PHP 8.2 o posterior con PDO MySQL, sesiones, Fileinfo y Zlib, y MySQL/MariaDB. No necesita Composer ni Node.
 
 ## Instalación nueva
 
-Requiere PHP 8.2 o posterior, PDO MySQL, sesiones, Fileinfo, Zlib y MySQL/MariaDB. No necesita Composer, Node ni compilar archivos en el hosting.
+1. **Base de datos:** en hPanel › *Bases de datos › Bases de datos MySQL*, crea una base y un usuario con su contraseña. Anota los tres datos.
+2. **Descarga el código:** en GitHub, *Code › Download ZIP*.
+3. **Sube y extrae:** con el *Administrador de archivos*, sube el ZIP a la carpeta del dominio (la que contiene `public_html`) y extráelo. GitHub mete todo en una carpeta `chincha-main/`; mueve `portal-private/` y `public_html/` desde ahí a la carpeta del dominio y reemplaza el `public_html` vacío.
+4. **Configura:** copia `portal-private/config.example.php` como `portal-private/config.php` y completa:
+   - `db_name`, `db_user` y `db_password`;
+   - `install_key`: una clave privada aleatoria de 32 caracteres o más. Guárdala.
+5. **Instala:** abre `https://tu-dominio/install.php`, escribe la `install_key` y crea la cuenta del administrador principal.
+6. **Borra** `public_html/install.php`. Después de instalar ya no sirve; si lo vuelves a abrir indica que el portal ya está instalado.
+7. **Permisos:** `public_html/assets/cache/` debe tener permisos **755**.
+8. **Comprueba:**
+   - Abre el sitio y entra a la intranet con la cuenta creada.
+   - Revisa *Configuración*: datos institucionales y logo.
+   - En *Mesa de partes › Áreas receptoras › Editar áreas*, carga las áreas reales con sus correos.
+   - En *Usuarios y roles*, crea las cuentas del personal.
 
-1. Sube `portal-private/` junto a `public_html/`, al mismo nivel. Incluye **todo** `public_html/assets/chincha/` y los archivos ocultos. No subas las carpetas de pruebas ni las evidencias históricas.
-2. Copia `portal-private/config.example.php` a `config.php` y configura una base vacía y una `install_key` privada aleatoria. No subas credenciales a GitHub.
-3. Abre `/install.php` con HTTPS y crea tu administrador. Se cargará el contenido institucional de Chincha, sin alumnos, empresas, certificados, cuentas ni expedientes ficticios.
-4. Comprueba el portal y elimina `install.php`, `actualizar.php` y `recuperar.php` cuando ya no sean necesarios.
+**Opcional, respaldos automáticos:** en hPanel › *Avanzado › Trabajos cron*, crea una tarea diaria con `php /home/<usuario>/domains/<dominio>/portal-private/cron.php`. Luego actívala en la intranet, en *Copias de seguridad*.
 
-## Actualizar una copia de prueba existente
+## Actualizar una instalación existente
 
-Subir archivos por sí solo **no sustituye el contenido ya guardado en MySQL**.
+Respalda antes los archivos y la base en hPanel.
 
-1. Respalda archivos y base en hPanel. Conserva `portal-private/config.php` y los respaldos privados.
-2. Sube las dos carpetas del paquete, incluyendo las nuevas imágenes y publicaciones de `assets/chincha/`.
-3. Inicia sesión como administrador en la intranet. Abre `/actualizar.php`, introduce tu `install_key` y marca **«Reemplazar el contenido público de prueba con la información de Chincha»**.
-4. La importación crea un respaldo privado y sustituye el contenido público. Conserva cuentas, contraseñas, solicitudes y registros académicos. Las personas y programas anteriores se conservan despublicados para no romper vínculos; los IDs académicos existentes no se reasignan.
-5. Comprueba el resultado y elimina `actualizar.php` del hosting. Si no marcas la casilla, el actualizador conserva el contenido anterior.
+Sube `portal-private/` y `public_html/` encima de las carpetas actuales y acepta **sobrescribir**. **No borres las carpetas antes:** así se conservan `config.php`, `backups/` e `install.lock`. Después, borra `public_html/install.php`.
 
-La importación es una sustitución deliberada del contenido público: respalda primero cualquier edición institucional propia. Los horarios operativos, responsables internos y destinatarios de cada oficina deben configurarse por la institución. El envío de correo sigue deshabilitado como en el sistema original.
+Subir archivos no reemplaza el contenido ya guardado en MySQL: lo publicado se sigue editando desde la intranet.
 
-[Corrección del buscador y actualización de un solo archivo en Hostinger](CORRECCION-BUSCADOR.md).
+Borra también del servidor `public_html/actualizar.php` y `public_html/recuperar.php` si siguen allí: ya no forman parte del sistema.
 
-## Validación de desarrollo
+## Dónde se edita
 
-Usa exclusivamente una base desechable cuyo nombre termine en `_test` y una configuración privada `config.test.php`. Los scripts de pruebas pueden recrear sus tablas.
+- **CSS y JavaScript del portal:** `public_html/assets/app/` (`portal.css` y `portal-1.js` a `portal-4.js`).
+- **Armazón de la página:** `portal-private/views/portal.php`.
+- **Contenido inicial** que carga la instalación: `portal-private/data/portal.json`.
+- **Imágenes:** `public_html/assets/chincha/`. Las imágenes JPG o PNG grandes tienen una copia `.webp` que el servidor entrega automáticamente a los navegadores compatibles.
 
-```sh
-node tests/demo-content.cjs
-node tests/browser-search.cjs
-node tests/browser-carousel.cjs
-node tests/browser-pages.cjs
-node tests/browser-community-regressions.cjs
-node tests/browser-registry-search.cjs
-node tests/browser-scoped-job-flow.cjs
-node tests/academic-identifiers.cjs
-php tests/pages-publication.php
-php tests/demo-validation.php
-PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/run.php
-PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/parity.php
-PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/chincha-import.php
-PISCO_TEST_CREDENTIALS=/ruta/credenciales-qa.json node tests/browser-chincha.cjs
-```
-
-`browser-chincha.cjs` necesita Playwright y Chromium como herramientas externas de desarrollo, una instalación local de pruebas y un archivo privado con la contraseña del administrador QA (`password`; opcionalmente `install_key` para probar el actualizador). Nunca uses credenciales de producción.
-
-`chincha-import.php` se ejecuta después de `parity.php`; verifica respaldo, importación repetible, permisos y conservación de datos operativos. Los informes de calidad y las evidencias de la versión de demostración son históricos; la validación de esta adaptación figura en `MAPEO-CHINCHA.md`.
-
-## Correcciones del informe de Chincha (28/10/2026)
-
-Se corrigieron la persistencia de publicaciones de horarios, las categorías TUPA al editar,
-las variantes conocidas de categorías y las erratas 4.1/10.6, los filtros de vigencia por
-intervalos y sin año, y el orden natural de códigos. Las ayudas indican qué se exige al
-publicar. El archivo conocido de admisión se identifica como **temario histórico de 2025**;
-no sustituye el prospecto aprobado del proceso actual. Los documentos de gestión muestran
-su estado de publicación sin equipararlo a vigencia legal.
-
-Para una instalación existente: respalda archivos y MySQL; sube `Content.php`, `Schema.php`,
-`Portal.php`, `bootstrap.php` y `views/portal.php` en `portal-private/`. Conserva `config.php`
-y los adjuntos. Ejecuta `/actualizar.php` con la clave privada de esa instalación y **sin
-marcar la importación del contenido de Chincha**. La versión 5 normaliza únicamente los
-textos conocidos; conserva IDs, montos, cuentas y datos operativos. Repetir la actualización
-no vuelve a incrementar la revisión si no hay cambios. Un horario perdido debe publicarse
-nuevamente. No copies datos o cuentas QA al hosting.
-
-Regresión adicional, exclusivamente con la base desechable `_test` y el servidor local
-configurado con el mismo `PORTAL_CONFIG_FILE`:
-
-```sh
-PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/parity.php
-PORTAL_CONFIG_FILE=/ruta/config.test.php php tests/functional-fixes.php
-PISCO_BASE_URL=http://127.0.0.1:8083 node tests/browser-functional-fixes.cjs
-```
-
-La prueba de navegador utiliza las cuentas sintéticas creadas por `parity.php` y modifica
-la base de pruebas. Detalle de cobertura, pendientes y despliegue: [CORRECCIONES-INFORME.md](CORRECCIONES-INFORME.md).
+El historial de pruebas, informes y herramientas de desarrollo sigue disponible en el historial de Git (commit `af1e06f`).
